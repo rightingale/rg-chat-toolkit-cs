@@ -15,8 +15,4 @@
     <ProjectReference Include="..\rg-chat-toolkit-cs\rg-chat-toolkit-cs.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

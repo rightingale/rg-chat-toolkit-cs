@@ -1,5 +1,4 @@
 ﻿using Azure.AI.OpenAI;
-using rg_chat_toolkit_cs.chat;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
 
@@ -20,7 +19,13 @@ namespace TestHarness
                 Synthesizer synthesizer = new Synthesizer();
                 // Format current date time, e.g., "4:04 pm on Monday, January 1st, 2035"
                 string timeAnnouncement = System.DateTime.Now.ToString("h:mm tt 'on' dddd, MMMM d, yyyy");
-                await synthesizer.SynthesizeSpeech("The current time is " + timeAnnouncement);
+                var speechResponse = await synthesizer.SynthesizeSpeech("The current time is " + timeAnnouncement);
+                // Stream bytes into "c:\temp\speech.mp3"
+                using (var fileStream = System.IO.File.Create("c:\\temp\\speech.mp3"))
+                {
+                    // Stream the results from speechResponse into fileStream
+                    await speechResponse.CopyToAsync(fileStream);
+                }
             }).Wait();
         }
 

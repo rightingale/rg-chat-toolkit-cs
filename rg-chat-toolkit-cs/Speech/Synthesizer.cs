@@ -13,7 +13,7 @@ namespace rg_chat_toolkit_cs.Speech
     public class Synthesizer
     {
 
-        public async Task SynthesizeSpeech(string text)
+        public async Task<System.IO.Stream> SynthesizeSpeech(string text)
         {
             var client = new AmazonPollyClient(ConfigurationHelper.AWSAccessKeyId, ConfigurationHelper.AWSSecretAccessKey);
 
@@ -21,27 +21,20 @@ namespace rg_chat_toolkit_cs.Speech
             {
                 OutputFormat = OutputFormat.Mp3,
                 Text = text,
-                VoiceId = "Joanna",
+                VoiceId = "Danielle",
+                Engine = Engine.Neural
             };
 
-            SynthesizeSpeechResponse response;
-            try
-            {
-                response = await client.SynthesizeSpeechAsync(request);
-                using (var memoryStream = new MemoryStream())
-                {
-                    response.AudioStream.CopyTo(memoryStream);
-                    var byteArr = memoryStream.ToArray();
-                    // you now have a byte array of the synthesized speech in MP3 format
+            SynthesizeSpeechResponse response = await client.SynthesizeSpeechAsync(request);
+            //// Read from the response.AudioStream until it is exhausted; yield return the bytes:
+            //byte[] buffer = new byte[16 * 1024];
+            //int bytesRead;
+            //while ((bytesRead = await response.AudioStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            //{
+            //    yield return buffer.Take(bytesRead).ToArray();
+            //}
 
-                    // Write to c:\temp\synthesize.mp3, overwrite if exists:
-                    File.WriteAllBytes(@"c:\temp\synthesize.mp3", byteArr);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            return response.AudioStream;
         }
 
     }
