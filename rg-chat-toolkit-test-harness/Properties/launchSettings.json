@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "rg-chat-toolkit-test-harness": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "AWS_REGION": "us-east-1"
+      },
+      "hotReloadEnabled": true
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "OpenAI": {
+    "APIKey": ""
+  },
+  "AWS": {
+    "AccessKeyId": "",
+    "SecretAccessKey": ""
+  }
+}
