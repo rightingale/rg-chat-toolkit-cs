@@ -1,6 +1,10 @@
 ﻿using Azure.AI.OpenAI;
+using OpenAIApiExample;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
+using rg_chat_toolkit_test_harness;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace TestHarness
 {
@@ -9,7 +13,40 @@ namespace TestHarness
         static void Main(string[] args)
         {
             //TestChatCompletion();
-            TestSynthesizeSpeech();
+            //TestSynthesizeSpeech();
+
+            //TestMedia_AWS();
+            TestMedia();
+        }
+
+        public static void TestMedia()
+        {
+            Task.Run(async () =>
+            {
+                // Get base64 of image from Resources
+                string base64Image = Convert.ToBase64String(Resources.IMG_2204_small);
+                var response = ImageChatCompletion.ExplainImage(base64Image);
+
+                // Await foreach to process each response as it arrives
+                await foreach (var str in response)
+                {
+                    Console.Write(str);
+                }
+            }).Wait();
+        }
+
+        public static void TestMedia_AWS()
+        {
+            // Get base64 of image from Resources
+            string base64Image = Convert.ToBase64String(Resources.IMG_2204_small);
+
+            Task.Run(async () =>
+            {
+                var imageAnalysisService = new ImageAnalysisService();
+                var result = await imageAnalysisService.AnalyzeImage(base64Image);
+                Console.WriteLine("Labels:" + string.Join(", ", result.labels.Select(l => l.Name)));
+                Console.WriteLine("Text:" + string.Join(", ", result.textDetections.Select(t => t.DetectedText)));
+            }).Wait();
         }
 
         public static void TestSynthesizeSpeech()

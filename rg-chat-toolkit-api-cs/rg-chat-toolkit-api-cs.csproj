@@ -5,10 +5,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>rg_chat_toolkit_api_cs</RootNamespace>
+    <UserSecretsId>bad5ae30-2f83-4dab-8041-5e3d6b377a4d</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.0-preview.3.24172.9" />
   </ItemGroup>
 
   <ItemGroup>

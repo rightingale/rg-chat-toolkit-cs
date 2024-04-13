@@ -23,10 +23,13 @@ namespace rg_chat_toolkit_api_cs
                 app.UseSwaggerUI();
             }
 
-            app.UseAuthorization();
-            
+            //app.UseAuthorization();
+
             // CORS allow all origins and methods and headers
-            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            app.UseCors(builder => builder
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
 
             app.MapControllers();
 
