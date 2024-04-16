@@ -48,5 +48,14 @@ namespace rg_chat_toolkit_cs.Configuration
                 return configuration["AWS:SecretAccessKey"];
             }
         }
+
+        public static string? ClaudeApiKey
+        {
+            get
+            {
+                var configuration = GetConfigurationBuilder().Build();
+                return configuration["Claude:ApiKey"];
+            }
+        }
     }
 }

@@ -16,7 +16,27 @@ namespace TestHarness
             //TestSynthesizeSpeech();
 
             //TestMedia_AWS();
-            TestMedia();
+            //TestMedia();
+
+            TestClaude();
+
+            TestWebScraper();
+        }
+
+        public static void TestClaude()
+        {
+            const string USER_PROMPT_IDENTIFIER = @"You are a customer service agent at a pharmacy.
+Identify the medicine in the photo: color, shape, imprint
+Enable search capabilities.  Include search link: ""https://www.drugs.com/imprints.php?imprint=L015&color=12&shape=24""
+Substitute correct imprint, color, and shape querystring parameters, according to drugs.com pill identification API documentation.
+Reply only in JSON: 
+{ color: ""white"", imprint: ""X555.3"", shape: ""square"", search_url: ""https://www.drugs.com/imprints.php?imprint=XXX34&color=99&shape=99"" }
+Code only.";
+
+            Task.Run(async () =>
+            {
+                await ClaudeChatCompletion.ChatCompletion(Resources_Extensions.L484_Bytes, USER_PROMPT_IDENTIFIER);
+            }).Wait();
         }
 
         public static void TestMedia()
@@ -24,7 +44,7 @@ namespace TestHarness
             Task.Run(async () =>
             {
                 // Get base64 of image from Resources
-                string base64Image = Convert.ToBase64String(Resources.IMG_2204_small);
+                string base64Image = Convert.ToBase64String(Resources_Extensions.L484_Bytes);
                 var response = ImageChatCompletion.ExplainImage(base64Image);
 
                 // Await foreach to process each response as it arrives
@@ -38,7 +58,7 @@ namespace TestHarness
         public static void TestMedia_AWS()
         {
             // Get base64 of image from Resources
-            string base64Image = Convert.ToBase64String(Resources.IMG_2204_small);
+            string base64Image = Convert.ToBase64String(Resources_Extensions.L484_Bytes);
 
             Task.Run(async () =>
             {
@@ -83,6 +103,16 @@ namespace TestHarness
                 {
                     Console.Write(str);
                 }
+            }).Wait();
+        }
+
+        public static void TestWebScraper()
+        {
+            Task.Run(async () =>
+            {
+                await WebScraper.Parse("https://www.drugs.com/imprints.php?imprint=L015&color=12&shape=24");
+
+                await WebScraper.Parse("https://www.drugs.com/imprints.php?imprint=L484&color=0&shape=5");
             }).Wait();
         }
     }
