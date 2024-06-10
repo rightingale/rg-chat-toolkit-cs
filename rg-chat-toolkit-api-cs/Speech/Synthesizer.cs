@@ -22,11 +22,11 @@ namespace rg_chat_toolkit_api_cs.Speech
     public class SynthesizerController : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> SynthesizeSpeech([FromQuery] string text)
+        public async Task<IActionResult> SynthesizeSpeech([FromQuery] string text, [FromQuery] string languageCode)
         {
             Synthesizer service = new Synthesizer();
 
-            return new FileStreamResult(await service.SynthesizeSpeech(text), "audio/mpeg");
+            return new FileStreamResult(await service.SynthesizeSpeech(text, languageCode), "audio/mpeg");
         }
     }
 }

@@ -7,22 +7,43 @@ using System.Text;
 using System.Threading.Tasks;
 using Amazon;
 using rg_chat_toolkit_cs.Configuration;
+using System.Globalization;
 
 namespace rg_chat_toolkit_cs.Speech
 {
     public class Synthesizer
     {
+        public const string LANGUAGECODE_ENGLISH = "en-US";
+        public const string LANGUAGECODE_SPANISH = "es-MX";
 
         public async Task<System.IO.Stream> SynthesizeSpeech(string text)
         {
+            return await this.SynthesizeSpeech(text, LANGUAGECODE_ENGLISH);
+        }
+
+        /// <summary>
+        /// languageCode: Example: "en-US", "es-MX"
+        /// </summary>
+        public async Task<System.IO.Stream> SynthesizeSpeech(string text, string languageCode)
+        {
+            const string VOICE_ID_NAME_ENGLISH = "Danielle";
+            const string VOICE_ID_NAME_SPANISH = "Mia";
+            string voiceId = VOICE_ID_NAME_ENGLISH;
+            var engine = Engine.Neural;
+            if (languageCode == LANGUAGECODE_SPANISH)
+            {
+                voiceId = VOICE_ID_NAME_SPANISH;
+                engine = Engine.Standard;
+            }
+
             var client = new AmazonPollyClient(ConfigurationHelper.AWSAccessKeyId, ConfigurationHelper.AWSSecretAccessKey);
 
             var request = new SynthesizeSpeechRequest
             {
                 OutputFormat = OutputFormat.Mp3,
                 Text = text,
-                VoiceId = "Danielle",
-                Engine = Engine.Neural
+                VoiceId = voiceId,
+                Engine = engine
             };
 
             SynthesizeSpeechResponse response = await client.SynthesizeSpeechAsync(request);

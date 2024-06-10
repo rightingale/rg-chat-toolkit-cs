@@ -13,14 +13,14 @@ namespace TestHarness
         static void Main(string[] args)
         {
             //TestChatCompletion();
-            //TestSynthesizeSpeech();
+            TestSynthesizeSpeech();
 
             //TestMedia_AWS();
             //TestMedia();
 
-            TestClaude();
+            //TestClaude();
 
-            TestWebScraper();
+            //TestWebScraper();
         }
 
         public static void TestClaude()
@@ -76,13 +76,24 @@ Code only.";
                 Synthesizer synthesizer = new Synthesizer();
                 // Format current date time, e.g., "4:04 pm on Monday, January 1st, 2035"
                 string timeAnnouncement = System.DateTime.Now.ToString("h:mm tt 'on' dddd, MMMM d, yyyy");
-                var speechResponse = await synthesizer.SynthesizeSpeech("The current time is " + timeAnnouncement);
+           
+                //var speechResponse = await synthesizer.SynthesizeSpeech("The current time is " + timeAnnouncement + ". This is just a test!", "es-US");
+                var speechResponse = await synthesizer.SynthesizeSpeech("La hora actual es " + timeAnnouncement + ". ¡Esto es solo una prueba!", "es-MX");
+
                 // Stream bytes into "c:\temp\speech.mp3"
                 using (var fileStream = System.IO.File.Create("c:\\temp\\speech.mp3"))
                 {
                     // Stream the results from speechResponse into fileStream
                     await speechResponse.CopyToAsync(fileStream);
                 }
+
+                System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    UseShellExecute = false,
+                    Arguments = "c:\\temp\\speech.mp3"
+                };
+                System.Diagnostics.Process.Start(psi);
             }).Wait();
         }
 
@@ -95,7 +106,7 @@ Code only.";
                     new[] {
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
-                new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order."),
+                new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order. Consider only family surname. But count distinct people as separate entries. Group by letter. Finally, which letter has the most entries?"),
                 });
 
                 // Await foreach to process each response as it arrives

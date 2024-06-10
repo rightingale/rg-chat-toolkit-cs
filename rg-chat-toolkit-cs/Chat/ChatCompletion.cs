@@ -22,7 +22,7 @@ namespace rg_chat_toolkit_cs.Chat
             // Init azure ai openai client
             var client = new OpenAIClient(ConfigurationHelper.OpenAIApiKey);
             var streamingResponse = client.GetChatCompletionsStreamingAsync(
-                new ChatCompletionsOptions("gpt-4", messages?.ToChatRequestMessages()) { }
+                new ChatCompletionsOptions("gpt-4o", messages?.ToChatRequestMessages()) { }
             );
             if (streamingResponse != null)
             {
