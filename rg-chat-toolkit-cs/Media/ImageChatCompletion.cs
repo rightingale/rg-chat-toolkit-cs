@@ -110,7 +110,7 @@ namespace OpenAIApiExample
             Be very brief.
             ";
 
-        public static async IAsyncEnumerable<string> ExplainImage(string base64Image)
+        public static async IAsyncEnumerable<string> ExplainImage(Guid sessionID, string base64Image)
         {
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {ConfigurationHelper.OpenAIApiKey}");
@@ -141,16 +141,13 @@ namespace OpenAIApiExample
             HttpResponseMessage response = await httpClient.PostAsync(OpenAiEndpoint, content);
             string jsonResponse = await response.Content.ReadAsStringAsync();
 
-            // Deserialize jsonResponse to OAIResponse
-            OAIResponse oaiResponse = JsonConvert.DeserializeObject<OAIResponse>(jsonResponse);
-            Console.WriteLine("???" + oaiResponse.Choices[0].Message.Content);
-
-
             // Lookup:
             ChatCompletion chatCompletion = new ChatCompletion();
-            var lookupResponse = chatCompletion.SendChatCompletion(SYSTEM_PROMPT_LOOKUP_MEDICATION,
+            var lookupResponse = chatCompletion.SendChatCompletion(
+                sessionID,
+                SYSTEM_PROMPT_LOOKUP_MEDICATION,
                 new[] { new Message("user", jsonResponse) },
-                null);
+                e => { /*NOOP*/ var allMessages = new List<Message>(); return allMessages; });
             if (lookupResponse != null)
             {
                 // Await foreach to process each response as it arrives

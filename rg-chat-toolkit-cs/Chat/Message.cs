@@ -10,7 +10,7 @@ namespace rg_chat_toolkit_cs.Chat
 {
 
     // Define a delegate called AddMessage that accepts a message 
-    public delegate void AddMessageDelegate(Message message);
+    public delegate List<Message> AddMessageDelegate(Message message);
 
     // Simplify the Azure OpenAI ChatRequestMessage class;
     // Only have Role and Content properties

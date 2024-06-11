@@ -14,10 +14,11 @@ namespace TestHarness
         {
             //TestChatCompletion();
 
+            TestToolFunction();
+
             //// Run TestToolFunction 10 times:
             //for (int i = 0; i < 10; i++)
             //{
-                TestToolFunction();
             //    Console.WriteLine("--- --- ---");
             //}
 
@@ -49,11 +50,13 @@ Code only.";
 
         public static void TestMedia()
         {
+            Guid sessionID = Guid.NewGuid();
+
             Task.Run(async () =>
             {
                 // Get base64 of image from Resources
                 string base64Image = Convert.ToBase64String(Resources_Extensions.L484_Bytes);
-                var response = ImageChatCompletion.ExplainImage(base64Image);
+                var response = ImageChatCompletion.ExplainImage(sessionID, base64Image);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -107,10 +110,12 @@ Code only.";
 
         public static void TestChatCompletion()
         {
+            Guid sessionID = Guid.NewGuid();
+
             Task.Run(async () =>
             {
                 ChatCompletion chatCompletion = new ChatCompletion();
-                var response = chatCompletion.SendChatCompletion("You are a helpful assistant. Be very verbose.",
+                var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be very verbose.",
                     new[] {
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
@@ -137,6 +142,8 @@ Code only.";
 
         public static void TestToolFunction()
         {
+            Guid sessionID = Guid.NewGuid();
+
             Task.Run(async () =>
             {
                 var messages = new[] {
@@ -146,9 +153,9 @@ Code only.";
                 }.ToList();
 
                 ChatCompletion chatCompletion = new ChatCompletion();
-                var response = chatCompletion.SendChatCompletion("You are a helpful assistant. Be concise.",
+                var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
-                    messages.Add,
+                    e => { messages.Add(e); return messages; },
                     true /*allowTools*/);
 
                 // Await foreach to process each response as it arrives

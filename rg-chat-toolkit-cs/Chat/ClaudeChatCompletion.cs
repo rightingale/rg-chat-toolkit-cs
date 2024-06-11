@@ -58,9 +58,9 @@ namespace rg_chat_toolkit_cs.Chat
 
                 outputs.Add(res);
             }
-            Console.WriteLine(string.Empty);
-            Console.WriteLine($@"Used Tokens - Input:{outputs.First().StreamStartMessage.Usage.InputTokens}.
-                            Output: {outputs.Last().Usage.OutputTokens}");
+            //Console.WriteLine(string.Empty);
+            //Console.WriteLine($@"Used Tokens - Input:{outputs.First().StreamStartMessage.Usage.InputTokens}.
+            //                Output: {outputs.Last().Usage.OutputTokens}");
         }
     }
 }

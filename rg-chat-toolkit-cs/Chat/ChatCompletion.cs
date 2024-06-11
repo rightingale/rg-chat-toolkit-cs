@@ -9,6 +9,7 @@ using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Configuration;
 using System.Text.Json;
 using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
+using rg_chat_toolkit_cs.Cache;
 
 namespace rg_chat_toolkit_cs.Chat
 {
@@ -19,15 +20,15 @@ namespace rg_chat_toolkit_cs.Chat
         Dictionary<int, StringBuilder> functionArgumentBuildersByIndex = new();
         StringBuilder contentBuilder = new();
 
-        public async IAsyncEnumerable<string> SendChatCompletion(string systemPrompt, Message[] messages, AddMessageDelegate handleAddMessage)
+        public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, AddMessageDelegate handleAddMessage)
         {
-            await foreach (var result in SendChatCompletion(systemPrompt, messages, handleAddMessage, true))
+            await foreach (var result in SendChatCompletion(sessionID, systemPrompt, messages, handleAddMessage, true))
             {
                 yield return result;
             }
         }
 
-        public async IAsyncEnumerable<string> SendChatCompletion(string systemPrompt, Message[] messages, AddMessageDelegate handleAddMessage, bool allowTools)
+        public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, AddMessageDelegate handleAddMessage, bool allowTools)
         {
             contentBuilder.Clear();
 
@@ -77,19 +78,18 @@ namespace rg_chat_toolkit_cs.Chat
 
                 foreach (KeyValuePair<int, string> indexIdPair in toolCallIdsByIndex)
                 {
-                    var toolMessage = new Message("tool", String.Empty)
+                    var toolRequestMessage = new Message("tool", String.Empty)
                     {
                         ID = indexIdPair.Value,
                         FunctionName = functionNamesByIndex[indexIdPair.Key],
                         FunctionAguments = functionArgumentBuildersByIndex[indexIdPair.Key].ToString()
                     };
-                    //handleAddMessage.Invoke(toolMessage);
 
                     if (allowTools)
                     {
-                        var toolResponseMessage = await GetToolCallResponseMessage(toolMessage);
+                        var toolResponseMessage = await GetToolCallResponseMessage(toolRequestMessage);
 
-                        const bool DO_INTERPRET = true;
+                        bool DO_INTERPRET = false;
 
                         if (DO_INTERPRET)
                         {
@@ -98,8 +98,15 @@ namespace rg_chat_toolkit_cs.Chat
                             newMessages.AddRange(messages);
                             newMessages.Add(new Message(role: "user", content: "Considering this information, please concisely answer the user's question:\n\n" + toolResponseMessage.Content));
                             ChatCompletion recursiveChatCompletion = new ChatCompletion();
-                            var interpretedResults = recursiveChatCompletion.SendChatCompletion(systemPrompt, newMessages.ToArray(), handleAddMessage, false);
-                            // Stream the results:
+                            var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), handleAddMessage, false);
+
+                            // Add the TOOL request.
+                            var allMessages = handleAddMessage(toolRequestMessage);
+                            // Populate cache:
+                            CacheManager.Populate<List<Message>>(sessionID, allMessages);
+
+
+                            // Stream the results (tool response).
                             await foreach (var interpretedResult in interpretedResults)
                             {
                                 yield return interpretedResult;
@@ -112,7 +119,7 @@ namespace rg_chat_toolkit_cs.Chat
                     }
                     else
                     {
-                        yield return toolMessage.Content;
+                        yield return toolRequestMessage.Content;
                     }
                 }
             }
@@ -151,8 +158,6 @@ namespace rg_chat_toolkit_cs.Chat
         /// </summary>
         internal async Task<Message> GetToolCallResponseMessage(Message toolCall)
         {
-            Console.WriteLine("\n\n***GetToolCallResponseMessage: " + toolCall.ID + "***\n\n");
-
             if (toolCall?.FunctionName == getWeatherTool.Name)
             {
                 string unvalidatedArguments = toolCall.FunctionAguments;

@@ -66,6 +66,7 @@ namespace rg_chat_toolkit_api_cs.Chat
     // Wrapper class for string SystemPrompt, Message[] Messages
     public class ChatCompletionRequest
     {
+        public Guid SessionID { get; set; }
         public string SystemPrompt { get; set; } = "";
         public List<Message> Messages { get; set; } = [];
     }
@@ -80,10 +81,11 @@ namespace rg_chat_toolkit_api_cs.Chat
             // Instantiate the delegate as anonymous function
             AddMessageDelegate _handleAddMessage = (message) => {
                 request.Messages.Add(message);
+                return request.Messages;
             };
 
             var service = new ChatCompletion();
-            return service.SendChatCompletion(request.SystemPrompt, request?.Messages?.ToArray() ?? [], _handleAddMessage);
+            return service.SendChatCompletion(request.SessionID, request.SystemPrompt, request?.Messages?.ToArray() ?? [], _handleAddMessage);
         }
     }
 }
