@@ -21,7 +21,7 @@ namespace rg_chat_toolkit_cs.Chat
 
         public async IAsyncEnumerable<string> SendChatCompletion(string systemPrompt, Message[] messages, AddMessageDelegate handleAddMessage)
         {
-            await foreach (var result in SendChatCompletion(systemPrompt, messages, handleAddMessage, false))
+            await foreach (var result in SendChatCompletion(systemPrompt, messages, handleAddMessage, true))
             {
                 yield return result;
             }
