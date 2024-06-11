@@ -149,9 +149,8 @@ namespace OpenAIApiExample
             // Lookup:
             ChatCompletion chatCompletion = new ChatCompletion();
             var lookupResponse = chatCompletion.SendChatCompletion(SYSTEM_PROMPT_LOOKUP_MEDICATION,
-                new[] {
-                new Message("user", jsonResponse),
-            });
+                new[] { new Message("user", jsonResponse) },
+                null);
             if (lookupResponse != null)
             {
                 // Await foreach to process each response as it arrives

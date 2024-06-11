@@ -13,7 +13,15 @@ namespace TestHarness
         static void Main(string[] args)
         {
             //TestChatCompletion();
-            TestSynthesizeSpeech();
+
+            //// Run TestToolFunction 10 times:
+            //for (int i = 0; i < 10; i++)
+            //{
+                TestToolFunction();
+            //    Console.WriteLine("--- --- ---");
+            //}
+
+            //TestSynthesizeSpeech();
 
             //TestMedia_AWS();
             //TestMedia();
@@ -76,7 +84,7 @@ Code only.";
                 Synthesizer synthesizer = new Synthesizer();
                 // Format current date time, e.g., "4:04 pm on Monday, January 1st, 2035"
                 string timeAnnouncement = System.DateTime.Now.ToString("h:mm tt 'on' dddd, MMMM d, yyyy");
-           
+
                 //var speechResponse = await synthesizer.SynthesizeSpeech("The current time is " + timeAnnouncement + ". This is just a test!", "es-US");
                 var speechResponse = await synthesizer.SynthesizeSpeech("La hora actual es " + timeAnnouncement + ". ¡Esto es solo una prueba!", "es-MX");
 
@@ -107,7 +115,7 @@ Code only.";
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
                 new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order. Consider only family surname. But count distinct people as separate entries. Group by letter. Finally, which letter has the most entries?"),
-                });
+                }, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -124,6 +132,30 @@ Code only.";
                 await WebScraper.Parse("https://www.drugs.com/imprints.php?imprint=L015&color=12&shape=24");
 
                 await WebScraper.Parse("https://www.drugs.com/imprints.php?imprint=L484&color=0&shape=5");
+            }).Wait();
+        }
+
+        public static void TestToolFunction()
+        {
+            Task.Run(async () =>
+            {
+                var messages = new[] {
+                        //new Message("system", "Respond in ES-419."),
+                        new Message("assistant", "How can I help?"),
+                        new Message("user", "What is the current weather in Paris? Please give Celius, F, and Kelvin."),
+                }.ToList();
+
+                ChatCompletion chatCompletion = new ChatCompletion();
+                var response = chatCompletion.SendChatCompletion("You are a helpful assistant. Be concise.",
+                    messages.ToArray(),
+                    messages.Add,
+                    true /*allowTools*/);
+
+                // Await foreach to process each response as it arrives
+                await foreach (var str in response)
+                {
+                    Console.Write(str);
+                }
             }).Wait();
         }
     }

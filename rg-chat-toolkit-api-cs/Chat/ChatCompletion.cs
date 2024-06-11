@@ -67,7 +67,7 @@ namespace rg_chat_toolkit_api_cs.Chat
     public class ChatCompletionRequest
     {
         public string SystemPrompt { get; set; } = "";
-        public Message[] Messages { get; set; } = [];
+        public List<Message> Messages { get; set; } = [];
     }
 
     [Route("[controller]")]
@@ -77,8 +77,13 @@ namespace rg_chat_toolkit_api_cs.Chat
         [HttpPost]
         public IAsyncEnumerable<string> SendChatCompletion([FromBody] ChatCompletionRequest request)
         {
+            // Instantiate the delegate as anonymous function
+            AddMessageDelegate _handleAddMessage = (message) => {
+                request.Messages.Add(message);
+            };
+
             var service = new ChatCompletion();
-            return service.SendChatCompletion(request.SystemPrompt, request.Messages);
+            return service.SendChatCompletion(request.SystemPrompt, request?.Messages?.ToArray() ?? [], _handleAddMessage);
         }
     }
 }

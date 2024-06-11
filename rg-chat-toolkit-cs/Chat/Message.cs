@@ -8,12 +8,20 @@ using System.Threading.Tasks;
 
 namespace rg_chat_toolkit_cs.Chat
 {
+
+    // Define a delegate called AddMessage that accepts a message 
+    public delegate void AddMessageDelegate(Message message);
+
     // Simplify the Azure OpenAI ChatRequestMessage class;
     // Only have Role and Content properties
     public class Message
     {
         public string Role { get; set; }
         public string Content { get; set; }
+
+        public string? ID { get; set; }
+        public string? FunctionName { get; set; }
+        public string? FunctionAguments { get; set; }
 
         public Message(string role, string content)
         {
@@ -37,9 +45,14 @@ namespace rg_chat_toolkit_cs.Chat
             {
                 return new ChatRequestSystemMessage(Content);
             }
+            else if (Role == "tool")
+            {
+                var msg = new ChatRequestToolMessage(Content, this.ID);
+                return msg;
+            }
             else
             {
-                throw new Exception("Invalid role");
+                throw new Exception("Invalid role: [" + Role + "]");
             }
         }
 
