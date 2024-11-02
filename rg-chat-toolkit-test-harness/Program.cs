@@ -14,7 +14,7 @@ namespace TestHarness
         {
             //TestChatCompletion();
 
-            TestToolFunction();
+            //TestToolFunction();
 
             //// Run TestToolFunction 10 times:
             //for (int i = 0; i < 10; i++)
