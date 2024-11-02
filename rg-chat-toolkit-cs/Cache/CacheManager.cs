@@ -38,7 +38,8 @@ namespace rg_chat_toolkit_cs.Cache
             return cache.Set<T>(key, values, new MemoryCacheEntryOptions()
             {
                 SlidingExpiration = SLIDING_EXPIRATION,
-                AbsoluteExpirationRelativeToNow = ABSOLUTE_EXPIRATION
+                AbsoluteExpirationRelativeToNow = ABSOLUTE_EXPIRATION,
+                Size = 1
             });
         }
 

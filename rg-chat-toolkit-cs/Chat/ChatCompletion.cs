@@ -89,7 +89,7 @@ namespace rg_chat_toolkit_cs.Chat
                     {
                         var toolResponseMessage = await GetToolCallResponseMessage(toolRequestMessage);
 
-                        bool DO_INTERPRET = false;
+                        bool DO_INTERPRET = true;
 
                         if (DO_INTERPRET)
                         {
