@@ -1,0 +1,11 @@
+﻿REM NOTE!  Do not paste the connection string into this file.
+REM Don't even think about it.  This command is just for reference.
+
+
+cmd
+
+set CONNECTION_RG="Server=db.TEST.datanac.io;Database=RG-Toolkit;User ID=---REDACTED---;Password=---REDACTED---;TrustServerCertificate=True"
+
+echo %CONNECTION_RG%
+
+dotnet ef dbcontext scaffold %CONNECTION_RG% Microsoft.EntityFrameworkCore.SqlServer --output-dir .\Data\Models --force
