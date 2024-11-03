@@ -18,39 +18,32 @@ namespace rg_chat_toolkit_cs.Chat
         Dictionary<int, string> toolCallIdsByIndex = new();
         Dictionary<int, string> functionNamesByIndex = new();
         Dictionary<int, StringBuilder> functionArgumentBuildersByIndex = new();
-        StringBuilder contentBuilder = new();
 
-        public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, AddMessageDelegate handleAddMessage)
+        public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools)
         {
-            await foreach (var result in SendChatCompletion(sessionID, systemPrompt, messages, handleAddMessage, true))
-            {
-                yield return result;
-            }
-        }
-
-        public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, AddMessageDelegate handleAddMessage, bool allowTools)
-        {
-            contentBuilder.Clear();
+            var contentBuilder = new StringBuilder();
 
             // Init azure ai openai client
             var client = new OpenAIClient(ConfigurationHelper.OpenAIApiKey);
 
-            List<Message> messagesList = new List<Message>();
-            messagesList.Add(new Message("system", systemPrompt));
+            List<Message> messagesList = new List<Message>
+    {
+        new Message("system", systemPrompt)
+    };
             messagesList.AddRange(messages);
 
-            var options = new ChatCompletionsOptions("gpt-4o", messagesList.ToArray()?.ToChatRequestMessages()) { };
-            // Add tools:
+            var options = new ChatCompletionsOptions("gpt-4o", messagesList.ToArray()?.ToChatRequestMessages());
             options.Tools.Add(getWeatherTool);
 
-            var streamingResponse = client.GetChatCompletionsStreamingAsync(options);
+            var streamingResponse = await client.GetChatCompletionsStreamingAsync(options);
             if (streamingResponse != null)
             {
                 // Await foreach to process each response as it arrives
-                await foreach (var response in streamingResponse.Result)
+                await foreach (var response in streamingResponse)
                 {
                     if (response.ToolCallUpdate is StreamingFunctionToolCallUpdate functionToolCallUpdate)
                     {
+                        // Existing tool-handling logic remains unchanged
                         if (functionToolCallUpdate.Id != null)
                         {
                             toolCallIdsByIndex[functionToolCallUpdate.ToolCallIndex] = functionToolCallUpdate.Id;
@@ -61,10 +54,9 @@ namespace rg_chat_toolkit_cs.Chat
                         }
                         if (functionToolCallUpdate.ArgumentsUpdate != null)
                         {
-                            StringBuilder argumentsBuilder
-                                = functionArgumentBuildersByIndex.TryGetValue(
-                                    functionToolCallUpdate.ToolCallIndex,
-                                    out StringBuilder existingBuilder) ? existingBuilder : new StringBuilder();
+                            StringBuilder argumentsBuilder = functionArgumentBuildersByIndex.TryGetValue(
+                                functionToolCallUpdate.ToolCallIndex,
+                                out StringBuilder existingBuilder) ? existingBuilder : new StringBuilder();
                             argumentsBuilder.Append(functionToolCallUpdate.ArgumentsUpdate);
                             functionArgumentBuildersByIndex[functionToolCallUpdate.ToolCallIndex] = argumentsBuilder;
                         }
@@ -72,21 +64,26 @@ namespace rg_chat_toolkit_cs.Chat
 
                     if (response.ContentUpdate != null)
                     {
-                        yield return response.ContentUpdate;
+                        contentBuilder.Append(response.ContentUpdate);
+                        Console.WriteLine($"Received token: {response.ContentUpdate}"); // Optional logging
+
+                        // Yield the updated content as a continuous stream
+                        yield return contentBuilder.ToString();
+                        contentBuilder.Clear(); // Clear after yielding to avoid duplicate streaming
                     }
                 }
 
-                foreach (KeyValuePair<int, string> indexIdPair in toolCallIdsByIndex)
+                if (allowTools)
                 {
-                    var toolRequestMessage = new Message("tool", String.Empty)
+                    foreach (KeyValuePair<int, string> indexIdPair in toolCallIdsByIndex)
                     {
-                        ID = indexIdPair.Value,
-                        FunctionName = functionNamesByIndex[indexIdPair.Key],
-                        FunctionAguments = functionArgumentBuildersByIndex[indexIdPair.Key].ToString()
-                    };
+                        var toolRequestMessage = new Message("tool", String.Empty)
+                        {
+                            ID = indexIdPair.Value,
+                            FunctionName = functionNamesByIndex[indexIdPair.Key],
+                            FunctionAguments = functionArgumentBuildersByIndex[indexIdPair.Key].ToString()
+                        };
 
-                    if (allowTools)
-                    {
                         var toolResponseMessage = await GetToolCallResponseMessage(toolRequestMessage);
 
                         bool DO_INTERPRET = true;
@@ -98,13 +95,12 @@ namespace rg_chat_toolkit_cs.Chat
                             newMessages.AddRange(messages);
                             newMessages.Add(new Message(role: "user", content: "Considering this information, please concisely answer the user's question:\n\n" + toolResponseMessage.Content));
                             ChatCompletion recursiveChatCompletion = new ChatCompletion();
-                            var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), handleAddMessage, false);
+                            var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false);
 
-                            // Add the TOOL request.
-                            var allMessages = handleAddMessage(toolRequestMessage);
-                            // Populate cache:
-                            CacheManager.Populate<List<Message>>(sessionID, allMessages);
-
+                            //// Add the TOOL request.
+                            //var allMessages = handleAddMessage(toolRequestMessage);
+                            //// Populate cache:
+                            //CacheManager.Populate<List<Message>>(sessionID, allMessages);
 
                             // Stream the results (tool response).
                             await foreach (var interpretedResult in interpretedResults)
@@ -116,10 +112,6 @@ namespace rg_chat_toolkit_cs.Chat
                         {
                             yield return toolResponseMessage.Content;
                         }
-                    }
-                    else
-                    {
-                        yield return toolRequestMessage.Content;
                     }
                 }
             }

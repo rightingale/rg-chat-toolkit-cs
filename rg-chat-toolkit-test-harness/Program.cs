@@ -120,7 +120,7 @@ Code only.";
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
                 new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order. Consider only family surname. But count distinct people as separate entries. Group by letter. Finally, which letter has the most entries?"),
-                }, null);
+                }, true/*allowTools*/);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -155,7 +155,6 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion();
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
-                    e => { messages.Add(e); return messages; },
                     true /*allowTools*/);
 
                 // Await foreach to process each response as it arrives

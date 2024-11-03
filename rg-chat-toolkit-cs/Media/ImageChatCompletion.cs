@@ -147,7 +147,7 @@ namespace OpenAIApiExample
                 sessionID,
                 SYSTEM_PROMPT_LOOKUP_MEDICATION,
                 new[] { new Message("user", jsonResponse) },
-                e => { /*NOOP*/ var allMessages = new List<Message>(); return allMessages; });
+                true/*allowTools*/);
             if (lookupResponse != null)
             {
                 // Await foreach to process each response as it arrives
