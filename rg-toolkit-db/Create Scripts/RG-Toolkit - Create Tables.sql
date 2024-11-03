@@ -30,6 +30,7 @@ create table ContentType
     ID UNIQUEIDENTIFIER not null default newSequentialID(),
 
     Name NVARCHAR(100) not null,
+    AllowStreamResponse bit not null default 0,
 
     IsActive bit not null default 1,
     CreateDate DATETIME not null default getdate(),
@@ -46,24 +47,24 @@ create unique index IX_ContentType on ContentType(
 
 -- System data:
 insert into ContentType
-    (Name)
+    (Name, AllowStreamResponse)
 values
-    ('text/plain'),
-    ('text/html'),
-    ('application/json'),
-    ('application/xml'),
-    ('application/pdf'),
-    ('image/png'),
-    ('image/jpeg'),
-    ('image/gif'),
-    ('image/svg+xml'),
-    ('audio/mpeg'),
-    ('audio/ogg'),
-    ('audio/wav'),
-    ('video/mp4'),
-    ('video/ogg'),
-    ('video/webm'),
-    ('application/octet-stream')
+    ('text/plain', 1),
+    ('text/html', 1),
+    ('application/json', 0),
+    ('application/xml', 0),
+    ('application/pdf', 1),
+    ('image/png', 1),
+    ('image/jpeg', 1),
+    ('image/gif', 1),
+    ('image/svg+xml', 0),
+    ('audio/mpeg', 1),
+    ('audio/ogg', 1),
+    ('audio/wav', 1),
+    ('video/mp4', 1),
+    ('video/ogg', 1),
+    ('video/webm', 1),
+    ('application/octet-stream', 1)
 
 
 
@@ -79,6 +80,7 @@ create table Prompt
     SystemPrompt NVARCHAR(Max) not null,
 
     ReponseContentTypeName NVARCHAR(100) not null default 'text/plain',
+    DoStreamResponse bit null,
 
     IsActive bit not null default 1,
     CreateDate DATETIME not null default getdate(),
@@ -227,7 +229,7 @@ create table Tool
     ID UNIQUEIDENTIFIER not null default newSequentialID(),
 
     Name NVARCHAR(100) not null,
-    Description NVARCHAR(Max) not null,
+    Description NVARCHAR(200) not null,
     Parameters NVARCHAR(Max) null,
 
     Assembly nvarchar(500) null,
@@ -277,6 +279,82 @@ create unique index IX_PromptTools on PromptTools (
 )
 
 -- --- --- ---
+-- Filters
+
+create table Filter
+(
+    TenantID UNIQUEIDENTIFIER not null,
+    ID UNIQUEIDENTIFIER not null default newSequentialID(),
+
+    Name NVARCHAR(100) not null,
+    Description NVARCHAR(Max) not null,
+
+    Assembly nvarchar(500) null,
+    Type nvarchar(500) null,
+    Method nvarchar(500) null,
+
+    IsActive bit not null default 1,
+    CreateDate DATETIME not null default getdate(),
+    LastUpdate DATETIME not null default getdate()
+)
+
+alter table Filter
+    add constraint PK_Filter_ID
+    primary key clustered (TenantID, ID)
+
+create unique index IX_Filter on Filter(
+    TenantID, Name
+)
+
+-- Relationships
+alter table Filter
+    add constraint FK_Filter_TenantID
+    foreign key (TenantID)
+    references Tenant(ID)
+
+-- --- --- ---
+-- PromptFilters
+
+create table PromptFilters
+(
+    TenantID UNIQUEIDENTIFIER not null,
+    ID UNIQUEIDENTIFIER not null default newSequentialID(),
+
+    PromptID UNIQUEIDENTIFIER not null,
+    FilterID UNIQUEIDENTIFIER not null,
+
+    IsActive bit not null default 1,
+    CreateDate DATETIME not null default getdate(),
+    LastUpdate DATETIME not null default getdate()
+)
+
+alter table PromptFilters
+    add constraint PK_PromptFilters_ID
+    primary key clustered (TenantID, ID)
+
+create unique index IX_PromptFilters on PromptFilters (
+    TenantID, PromptID, FilterID
+)
+
+-- Relationships
+alter table PromptFilters
+    add constraint FK_PromptFilters_TenantID
+    foreign key (TenantID)
+    references Tenant(ID)
+
+-- PromptID
+alter table PromptFilters
+    add constraint FK_PromptFilters_PromptID
+    foreign key (TenantID, PromptID)
+    references Prompt(TenantID, ID)
+
+-- FilterID
+alter table PromptFilters
+    add constraint FK_PromptFilters_FilterID
+    foreign key (TenantID, FilterID)
+    references Filter(TenantID, ID)
+
+-- --- --- ---
 -- Sample data:
 
 declare @tenantID uniqueidentifier = '00000000-0000-0000-0000-000000000000'
@@ -287,18 +365,18 @@ values
 
 declare @promptID uniqueidentifier = newID()
 insert into Prompt
-    (TenantID, ID, Name, SystemPrompt)
+    (TenantID, ID, Name, SystemPrompt, ReponseContentTypeName, DoStreamResponse)
 values
-    (@tenantID, @promptID, 'demo_greeter', 'You are a helpful greeter.')
+    (@tenantID, @promptID, 'demo_greeter', 'You are a helpful greeter.', 'text/plain', null)
 
 insert into Prompt
-    (TenantID, ID, Name, SystemPrompt)
+    (TenantID, ID, Name, SystemPrompt, ReponseContentTypeName, DoStreamResponse)
 values
-    (@tenantID, newID(), 'demo_greeter_weather', 'You are a helpful greeter. Lookup current weather conditions for a random major city and return it with your greeting.')
+    (@tenantID, newID(), 'demo_greeter_weather', 'You are a helpful greeter. Lookup current weather conditions for a random major city and return it with your greeting.', 'text/plain', 1)
 
 
 update Prompt set SystemPrompt='You are a helpful greeter. Lookup current weather conditions for a random major city and return it with your greeting.
-Please re-format the weather as plain text. Include the name of the nearby city.' where Name='demo_greeter'
+Please re-format the weather as plain text. Include the name of the nearby city.' where Name='demo_greeter_weather'
 
 
 declare @objectID uniqueidentifier = newID()
@@ -328,6 +406,26 @@ insert into AccessKey
     (TenantID, KeyValue)
 values
     (@tenantID, newID())
+
+
+-- HAP speech quality filter
+declare @filterID uniqueidentifier = newID()
+insert into Filter
+    (TenantID, ID, Name, Description, Assembly, Type, Method)
+values
+    (@tenantID, @filterID, 'hap_default', 'Lightweight default HAP filter.', null, null, null)
+
+
+-- demo_greeter_weather Prompt ID
+declare @filter_PromptID uniqueidentifier = (select ID
+from Prompt
+where Name='demo_greeter_weather')
+
+insert into PromptFilters
+    (TenantID, PromptID, FilterID)
+values
+    (@tenantID, @filter_PromptID, @filterID)
+
 
 -- --- --- ---
 -- Sample data:
@@ -362,6 +460,14 @@ from PromptTools
 
 select top 100
     *
+from Filter
+
+select top 100
+    *
+from PromptFilters
+
+select top 100
+    *
 from AccessKey
 
 
@@ -374,13 +480,17 @@ from AccessKey
 
 
 drop table PromptObjects
-drop table Prompt
-drop table Object
 drop table AccessKey
 drop table Tool
-drop table Tenant
-drop table ContentType
 drop table PromptTools
+drop table PromptFilters
+drop table Filter
+drop table Prompt
+drop table Object
+drop table ContentType
+drop table Tenant
+
+
 
 
 
