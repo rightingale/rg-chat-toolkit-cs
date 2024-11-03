@@ -17,7 +17,11 @@ public partial class Tenant
 
     public virtual ICollection<AccessKey> AccessKeys { get; set; } = new List<AccessKey>();
 
+    public virtual ICollection<Filter> Filters { get; set; } = new List<Filter>();
+
     public virtual ICollection<Object> Objects { get; set; } = new List<Object>();
+
+    public virtual ICollection<PromptFilter> PromptFilters { get; set; } = new List<PromptFilter>();
 
     public virtual ICollection<Prompt> Prompts { get; set; } = new List<Prompt>();
 

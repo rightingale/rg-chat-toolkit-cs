@@ -19,9 +19,13 @@ public partial class RgToolkitContext : DbContext
 
     public virtual DbSet<ContentType> ContentTypes { get; set; }
 
+    public virtual DbSet<Filter> Filters { get; set; }
+
     public virtual DbSet<Object> Objects { get; set; }
 
     public virtual DbSet<Prompt> Prompts { get; set; }
+
+    public virtual DbSet<PromptFilter> PromptFilters { get; set; }
 
     public virtual DbSet<PromptObject> PromptObjects { get; set; }
 
@@ -30,6 +34,7 @@ public partial class RgToolkitContext : DbContext
     public virtual DbSet<Tenant> Tenants { get; set; }
 
     public virtual DbSet<Tool> Tools { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -81,6 +86,36 @@ public partial class RgToolkitContext : DbContext
             entity.Property(e => e.LastUpdate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<Filter>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.Id }).HasName("PK_Filter_ID");
+
+            entity.ToTable("Filter");
+
+            entity.HasIndex(e => new { e.TenantId, e.Name }, "IX_Filter").IsUnique();
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newsequentialid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.Assembly).HasMaxLength(500);
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Method).HasMaxLength(500);
+            entity.Property(e => e.Name).HasMaxLength(100);
+            entity.Property(e => e.Type).HasMaxLength(500);
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.Filters)
+                .HasForeignKey(d => d.TenantId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Filter_TenantID");
         });
 
         modelBuilder.Entity<Object>(entity =>
@@ -155,6 +190,42 @@ public partial class RgToolkitContext : DbContext
                 .HasForeignKey(d => d.TenantId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Prompt_TenantID");
+        });
+
+        modelBuilder.Entity<PromptFilter>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.Id }).HasName("PK_PromptFilters_ID");
+
+            entity.HasIndex(e => new { e.TenantId, e.PromptId, e.FilterId }, "IX_PromptFilters").IsUnique();
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newsequentialid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FilterId).HasColumnName("FilterID");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.PromptId).HasColumnName("PromptID");
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.PromptFilters)
+                .HasForeignKey(d => d.TenantId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptFilters_TenantID");
+
+            entity.HasOne(d => d.Filter).WithMany(p => p.PromptFilters)
+                .HasForeignKey(d => new { d.TenantId, d.FilterId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptFilters_FilterID");
+
+            entity.HasOne(d => d.Prompt).WithMany(p => p.PromptFilters)
+                .HasForeignKey(d => new { d.TenantId, d.PromptId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptFilters_PromptID");
         });
 
         modelBuilder.Entity<PromptObject>(entity =>
@@ -248,6 +319,7 @@ public partial class RgToolkitContext : DbContext
             entity.Property(e => e.CreateDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(200);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.LastUpdate)
                 .HasDefaultValueSql("(getdate())")

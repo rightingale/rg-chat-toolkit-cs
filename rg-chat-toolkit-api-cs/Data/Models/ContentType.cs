@@ -9,6 +9,8 @@ public partial class ContentType
 
     public string Name { get; set; } = null!;
 
+    public bool AllowStreamResponse { get; set; }
+
     public bool IsActive { get; set; }
 
     public DateTime CreateDate { get; set; }
