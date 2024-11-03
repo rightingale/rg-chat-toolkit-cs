@@ -17,6 +17,7 @@ public static class DataMethods
     {
         var db = RGDatabaseContextFactory.Instance.CreateDbContext();
         return db.Prompts
+            .Include(p => p.ReponseContentTypeNameNavigation)
             .Where(p =>
                 p.TenantId == tenantID
                 && p.Name == name
