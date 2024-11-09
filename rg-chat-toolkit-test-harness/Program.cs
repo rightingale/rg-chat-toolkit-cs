@@ -5,6 +5,7 @@ using rg_chat_toolkit_cs.Speech;
 using rg_chat_toolkit_test_harness;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Text;
 
 namespace TestHarness
 {
@@ -15,6 +16,8 @@ namespace TestHarness
             //TestChatCompletion();
 
             //TestToolFunction();
+
+            TestToolFunctionGrocery();
 
             //// Run TestToolFunction 10 times:
             //for (int i = 0; i < 10; i++)
@@ -153,7 +156,7 @@ Code only.";
                 }.ToList();
 
                 ChatCompletion chatCompletion = new ChatCompletion();
-                var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
+                var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
                     true /*allowTools*/);
 
@@ -162,6 +165,34 @@ Code only.";
                 {
                     Console.Write(str);
                 }
+            }).Wait();
+        }
+
+        public static void TestToolFunctionGrocery()
+        {
+            Guid sessionID = Guid.NewGuid();
+
+            Task.Run(async () =>
+            {
+                var messages = new[] {
+                        //new Message("system", "Respond in ES-419."),
+                        new Message("assistant", "How can I help?"),
+                        new Message("user", "Where is the fancy cheese like stinky cheeses for a party"),
+                }.ToList();
+
+                ChatCompletion chatCompletion = new ChatCompletion();
+                var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
+                    messages.ToArray(),
+                    true /*allowTools*/);
+
+                StringBuilder stringBuilder = new StringBuilder();
+                // Await foreach to process each response as it arrives
+                await foreach (var str in response)
+                {
+                    stringBuilder.Append(str);
+                }
+
+                Console.WriteLine(stringBuilder.ToString());
             }).Wait();
         }
     }

@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\rg-integration-abstractions\rg-integration-abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="application.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

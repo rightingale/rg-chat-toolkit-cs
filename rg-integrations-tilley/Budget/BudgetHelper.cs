@@ -16,9 +16,10 @@ public class BudgetHelper
         this.producer_token = producer_token;
     }
 
-    //public static async Task<List<totilley_daemon.Models.Budget>> Budget_Search (string state_name, string county_name, string commodity_name)
-    //{
-    //    string connectionString = ConfigurationHelper.GetConnectionString("DATANAC-Users");
-    //    DatanacUsersContextFactory.Instance.CreateDbContext()
-    //}
+    public static async Task<List<totilley_daemon.Models.Budget>> Budget_Search (string state_name, string county_name, string commodity_name)
+    {
+        //string connectionString = ConfigurationHelper.GetConnectionString("DATANAC-Users");
+        //DatanacUsersContextFactory.Instance.CreateDbContext();
+        throw new NotImplementedException();
+    }
 }

@@ -1,5 +1,4 @@
-﻿using Azure.AI.OpenAI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +9,8 @@ using rg_chat_toolkit_cs.Configuration;
 using System.Text.Json;
 using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 using rg_chat_toolkit_cs.Cache;
+using rg_integration_abstractions.Memory;
+using Azure.AI.OpenAI;
 
 namespace rg_chat_toolkit_cs.Chat
 {
@@ -34,6 +35,7 @@ namespace rg_chat_toolkit_cs.Chat
 
             var options = new ChatCompletionsOptions("gpt-4o", messagesList.ToArray()?.ToChatRequestMessages());
             options.Tools.Add(getWeatherTool);
+            options.Tools.Add(VectorStoreMemory.Instance);
 
             var streamingResponse = await client.GetChatCompletionsStreamingAsync(options);
             if (streamingResponse != null)
@@ -65,7 +67,7 @@ namespace rg_chat_toolkit_cs.Chat
                     if (response.ContentUpdate != null)
                     {
                         contentBuilder.Append(response.ContentUpdate);
-                        Console.WriteLine($"Received token: {response.ContentUpdate}"); // Optional logging
+                        //Console.WriteLine($"Received token: {response.ContentUpdate}"); // Optional logging
 
                         // Yield the updated content as a continuous stream
                         yield return contentBuilder.ToString();
@@ -183,6 +185,10 @@ namespace rg_chat_toolkit_cs.Chat
                 // Get whole URL contents as string: with HttpClient class
                 string htmlContent = await new System.Net.Http.HttpClient().GetStringAsync(url);
                 return new Message(role: "tool", content: htmlContent);
+            }
+            else if (toolCall?.FunctionName == VectorStoreMemory.Instance.Name)
+            {
+                return await (new VectorStoreMemory()).GetToolResponse(toolCall);
             }
             else
             {
