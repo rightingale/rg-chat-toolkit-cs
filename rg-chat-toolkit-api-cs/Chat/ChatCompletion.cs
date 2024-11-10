@@ -1,23 +1,26 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using epic_retail_api_cs.Cache;
+using Microsoft.AspNetCore.Mvc;
+using rg.integrations.epic.Tools.Memory;
+using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_cs.Chat;
+using System.Text;
 
 namespace rg_chat_toolkit_api_cs.Chat;
 
-
-
-// Wrapper class for string SystemPrompt, Message[] Messages
-public class ChatCompletionRequest
+public class RequestBase
 {
     public Guid TenantID { get; set; }
     public Guid UserID { get; set; }
     public Guid SessionID { get; set; }
-
-    public string? PromptName { get; set; }
     public Guid AccessKey { get; set; }
+}
 
+
+public class ChatCompletionRequest : RequestBase
+{
+    public string? PromptName { get; set; }
     public string? RequestMessageContent { get; set; }
-    //public List<Message> ResponseMessages { get; set; } = new List<Message>();
     public bool DoStreamResponse { get; set; } = false;
 }
 
@@ -26,14 +29,16 @@ public class ChatCompletionRequest
 // Sample JSON for ChatCompletionRequest API
 /*
 
+
 {
-    "TenantID": "00000000-0000-0000-0000-000000000000",
+    "TenantID": "787923AB-0D9F-EF11-ACED-021FE1D77A3B",
     "SessionID": "00000000-0000-0000-0000-000000000000",
-    "PromptName": "demo_greeter_weather",
+    "PromptName": "instore_experience_helper",
     "AccessKey": "00000000-0000-0000-0000-000000000000",
-    "RequestMessageContent": "Guten tag!",
+    "RequestMessageContent": "Where's the wheat bread?",
     "DoStreamResponse": false
 }
+
 
 */
 
@@ -103,6 +108,11 @@ public class ChatCompletionController : ControllerBase
                 }
                 // Join into 1 string:
                 var responseString = string.Join(String.Empty, responseList);
+
+                // Save in cache:
+                var cacheKey = RGCache.GetCacheKey(request.TenantID, request.SessionID);
+                await RGCache.Cache.Put(cacheKey, responseString);
+
                 yield return responseString;
             }
         }
@@ -111,4 +121,5 @@ public class ChatCompletionController : ControllerBase
             throw new ApplicationException("Prompt not found.");
         }
     }
+
 }

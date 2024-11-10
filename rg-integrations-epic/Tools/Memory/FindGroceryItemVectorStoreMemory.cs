@@ -51,7 +51,9 @@ public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
     // ---
 
     public static readonly IConfigurationRoot config = new ConfigurationManager()
+        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
         .AddUserSecrets<FindGroceryItemVectorStoreMemory>()
+        .AddEnvironmentVariables()
         .Build();
 
     public override EmbeddingBase EmbeddingModel

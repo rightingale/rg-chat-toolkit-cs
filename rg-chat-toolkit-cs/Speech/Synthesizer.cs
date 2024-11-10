@@ -55,6 +55,15 @@ namespace rg_chat_toolkit_cs.Speech
             //    yield return buffer.Take(bytesRead).ToArray();
             //}
 
+            // Write to temp file
+            using (var fileStream = System.IO.File.Create("c:\\temp\\speech.mp3"))
+            {
+                // Stream the results from speechResponse into fileStream
+                await response.AudioStream.CopyToAsync(fileStream);
+            }
+            // Seek beginning:
+            //response.AudioStream.Seek(0, System.IO.SeekOrigin.Begin);
+
             return response.AudioStream;
         }
 

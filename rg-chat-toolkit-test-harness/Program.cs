@@ -1,5 +1,7 @@
-﻿using Azure.AI.OpenAI;
+﻿using Azure;
+using Azure.AI.OpenAI;
 using OpenAIApiExample;
+using rg_chat_toolkit_api_cs.Chat;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
 using rg_chat_toolkit_test_harness;
@@ -17,7 +19,8 @@ namespace TestHarness
 
             //TestToolFunction();
 
-            TestToolFunctionGrocery();
+            //TestToolFunctionGrocery();
+            TestToolFunctionGroceryApi();
 
             //// Run TestToolFunction 10 times:
             //for (int i = 0; i < 10; i++)
@@ -165,6 +168,33 @@ Code only.";
                 {
                     Console.Write(str);
                 }
+            }).Wait();
+        }
+
+        public static async void TestToolFunctionGroceryApi()
+        {
+            Guid tenantID = Guid.Parse("787923AB-0D9F-EF11-ACED-021FE1D77A3B");
+            Guid sessionID = Guid.Parse("00000000-0000-0000-0000-000000000000");
+
+            Task.Run(async () =>
+            {
+                ChatCompletionController api = new ChatCompletionController();
+                var responseAsync = api.SendChatCompletion(new ChatCompletionRequest()
+                {
+                    TenantID = tenantID,
+                    SessionID = sessionID,
+                    PromptName = "instore_experience_helper",
+                    RequestMessageContent = "Where is cream cheese?"
+                });
+
+                StringBuilder stringBuilder = new StringBuilder();
+                // Await foreach to process each response as it arrives
+                await foreach (var str in responseAsync)
+                {
+                    stringBuilder.Append(str);
+                }
+
+                Console.WriteLine(stringBuilder.ToString());
             }).Wait();
         }
 

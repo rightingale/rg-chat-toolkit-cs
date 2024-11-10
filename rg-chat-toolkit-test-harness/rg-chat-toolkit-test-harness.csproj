@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\rg-chat-toolkit-api-cs\rg-chat-toolkit-api-cs.csproj" />
     <ProjectReference Include="..\rg-chat-toolkit-cs\rg-chat-toolkit-cs.csproj" />
   </ItemGroup>
 
