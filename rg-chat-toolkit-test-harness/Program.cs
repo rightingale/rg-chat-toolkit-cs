@@ -175,6 +175,7 @@ Code only.";
         {
             Guid tenantID = Guid.Parse("787923AB-0D9F-EF11-ACED-021FE1D77A3B");
             Guid sessionID = Guid.Parse("00000000-0000-0000-0000-000000000000");
+            Guid accessKey = Guid.Parse("00000000-0000-0000-0000-000000000000");
 
             Task.Run(async () =>
             {
@@ -183,8 +184,9 @@ Code only.";
                 {
                     TenantID = tenantID,
                     SessionID = sessionID,
+                    AccessKey = accessKey,
                     PromptName = "instore_experience_helper",
-                    RequestMessageContent = "Where is cream cheese?"
+                    RequestMessageContent = "Do you have bleach?"
                 });
 
                 StringBuilder stringBuilder = new StringBuilder();

@@ -24,7 +24,7 @@ namespace rg.integrations.epic.Tools.Memory;
     "PromptName": "instore_experience_helper",
     "SessionID": "00000000-0000-0000-0000-000000000000",
     "AccessKey": "00000000-0000-0000-0000-000000000000",
-    "RequestMessageContent": "Is the Cheese on Aisle 99?",
+    "RequestMessageContent": "Do you have cleaning products?",
     "DoStreamResponse": false
 }
 
@@ -43,7 +43,7 @@ public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
     {
         get
         {
-            return "Using the following GROCERY ITEMS, concisely answer the user's message. Name individual products. Be conversational but concise. Do not say anything about 'search results' or computer talk. Only report unique aisles found across the most relevant GROCERY ITEMS:";
+            return "Using the following GROCERY ITEMS, concisely answer the user's message. Name individual products. Expand abbreviations. Be conversational but concise. Do not say anything about 'search results' or computer talk. Only report unique aisles found across the most relevant GROCERY ITEMS:";
             //return "Using these SEARCH RESULTS, concisely answer the user's message. Always include an upsell opportunity & aisle. Only upsell replac goods. Be exceedingly concise!! Only report unique aisles found across the most relevant SEARCH RESULTS:";
         }
     }

@@ -46,6 +46,27 @@ public class ChatCompletionRequest : RequestBase
 [ApiController]
 public class ChatCompletionController : ControllerBase
 {
+
+    [HttpPost("SendChatCompletion_Sync")]
+    public async Task<IActionResult> SendChatCompletion_Sync([FromBody] ChatCompletionRequest request)
+    {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        try
+        {
+            var response = SendChatCompletion(request);
+            await foreach (var item in response)
+            {
+                stringBuilder.Append(item);
+            }
+            return Ok(stringBuilder.ToString());
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpPost]
     public async IAsyncEnumerable<string> SendChatCompletion([FromBody] ChatCompletionRequest request)
     {
@@ -110,7 +131,7 @@ public class ChatCompletionController : ControllerBase
                 var responseString = string.Join(String.Empty, responseList);
 
                 // Save in cache:
-                var cacheKey = RGCache.GetCacheKey(request.TenantID, request.SessionID);
+                var cacheKey = RGCache.GetCacheKey(request.TenantID, request.SessionID, request.AccessKey);
                 await RGCache.Cache.Put(cacheKey, responseString);
 
                 yield return responseString;

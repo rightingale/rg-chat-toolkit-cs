@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "apis1": {
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/rg-chat-toolkit-api-csapi/apis/rg-chat-toolkit-api",
+      "type": "apis.azure"
+    }
+  }
+}

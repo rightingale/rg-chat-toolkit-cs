@@ -33,7 +33,7 @@ Sample JSON for SynthesizeSpeechRequest API
 {
     "TenantID": "787923AB-0D9F-EF11-ACED-021FE1D77A3B",
     "SessionID": "00000000-0000-0000-0000-000000000000",
-    "AccessKey": "00000000-0000-0000-0000-000000000000",
+    "AccessKey": "9ca151e3-d544-4b85-b44b-bbe055220808",
     "DoStreamResponse": false
 }
 
@@ -45,24 +45,40 @@ Sample JSON for SynthesizeSpeechRequest API
 [ApiController]
 public class SynthesizerController : ControllerBase
 {
+    [HttpGet]
+    public async Task<IActionResult> SynthesizeSpeech([FromQuery] Guid TenantID, [FromQuery] Guid SessionID, [FromQuery] Guid AccessKey)
+    {
+        return await SynthesizeSpeech(new SynthesizeSpeechRequest() { TenantID = TenantID, SessionID = SessionID, AccessKey = AccessKey });
+    }
+
     [HttpPost]
     public async Task<IActionResult> SynthesizeSpeech([FromBody] SynthesizeSpeechRequest request)
     {
-        // Check cache
-        var cacheKey = RGCache.GetCacheKey(request.TenantID, request.SessionID);
-        var sessionText = await RGCache.Cache.Get(cacheKey);
-
-        // Remove emojis
-        sessionText = System.Text.RegularExpressions.Regex.Replace(sessionText, @"\p{Cs}", "");
-
-        if (sessionText != null)
+        try
         {
-            rg_chat_toolkit_cs.Speech.Synthesizer synthesizer = new rg_chat_toolkit_cs.Speech.Synthesizer();
-            return new FileStreamResult(await synthesizer.SynthesizeSpeech(sessionText), "audio/mpeg");
+            // Check cache
+            var cacheKey = RGCache.GetCacheKey(request.TenantID, request.SessionID, request.AccessKey);
+            var sessionText = await RGCache.Cache.Get(cacheKey);
+
+            // Remove emojis
+            sessionText = System.Text.RegularExpressions.Regex.Replace(sessionText, @"\p{Cs}", "");
+
+            if (sessionText != null)
+            {
+                rg_chat_toolkit_cs.Speech.Synthesizer synthesizer = new rg_chat_toolkit_cs.Speech.Synthesizer();
+                return new FileStreamResult(await synthesizer.SynthesizeSpeech(sessionText), "audio/mpeg")
+                {
+                    FileDownloadName = "speech.mp3"
+                };
+            }
+            else
+            {
+                throw new ApplicationException("No session content was found.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            throw new ApplicationException("No session content was found.");
+            return BadRequest(ex.Message);
         }
     }
 }

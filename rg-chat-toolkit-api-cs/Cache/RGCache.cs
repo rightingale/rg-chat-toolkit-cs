@@ -30,8 +30,8 @@ public static class RGCache
         );
     }
 
-    public static string GetCacheKey(Guid tenantID, Guid sessionID)
+    public static string GetCacheKey(Guid tenantID, Guid sessionID, Guid accessKey)
     {
-        return $"chat-{tenantID}-{sessionID}";
+        return $"chat-{tenantID}-{sessionID}-{accessKey}";
     }
 }

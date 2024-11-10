@@ -66,9 +66,10 @@ public class QdrantHelper
             //{
             //    Console.Write(".");
             //}
-            //Console.WriteLine(result.Item1.Payload["ItemName"] + "\t" + result.Item2);
 
-            var currentResult = result.Item1.Payload["Data"];
+            Console.WriteLine(result.Item1.Payload["Text"] + "\t" + result.Item2);
+
+            var currentResult = result.Item1.Payload["Text"];
 
             stringBuilder.AppendLine(currentResult.ToString());
         }
