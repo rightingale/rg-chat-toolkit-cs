@@ -14,6 +14,23 @@ using System.Threading.Tasks;
 
 namespace rg.integrations.epic.Tools.Memory;
 
+/*
+
+    Sample JSON for relevant ChatCompletion request:
+
+
+{
+    "TenantID": "787923AB-0D9F-EF11-ACED-021FE1D77A3B",
+    "PromptName": "instore_experience_helper",
+    "SessionID": "00000000-0000-0000-0000-000000000000",
+    "AccessKey": "00000000-0000-0000-0000-000000000000",
+    "RequestMessageContent": "Is the Cheese on Aisle 99?",
+    "DoStreamResponse": false
+}
+
+
+*/
+
 public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
 {
 

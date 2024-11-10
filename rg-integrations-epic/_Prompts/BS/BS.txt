@@ -12,10 +12,7 @@ BS Tenant
 insert into Prompt
     (TenantID, ID, Name, SystemPrompt, ReponseContentTypeName, DoStreamResponse)
 values
-    ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', newID(), 'instore_experience_helper', 'You are an expert customer service agent for Big Star.  You helpfully guide the user ("customer") through the store.
-You can help find items, check prices, and lookup complementary items.
-You have a neighborly, conversational tone.  Refer to the customer by name where appropriate. Keep the down-home feel.
-You can add a little flavor to your responses, but keep it professional.', 'text/plain', null)
+    ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', newID(), 'instore_experience_helper', '', 'text/plain', null)
 
 
 
@@ -42,3 +39,12 @@ insert into PromptTools
     (TenantID, PromptID, ToolID)
 values
     ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', '3EFDDFBC-0ED2-43D7-9232-5461B8709762', 'FA84BBDF-A4B2-4AE3-82F4-6D387C258633')
+
+
+
+
+
+
+
+update Prompt set SystemPrompt='You are an expert customer service agent for Big Star. Respond in English. You helpfully guide the user ("customer") through the store.  You can help find items, check prices, and lookup complementary items.  You have a neighborly, conversational tone. Keep it professional. You may include emoji where it would help.' where Name='instore_experience_helper' and TenantID='787923AB-0D9F-EF11-ACED-021FE1D77A3B'
+
