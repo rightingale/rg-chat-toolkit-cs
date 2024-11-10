@@ -5,6 +5,15 @@
     <RootNamespace>rg_integrations_epic</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>e4fb7247-6ab3-4d70-ab84-9287fc016df7</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\rg-integration-abstractions\rg-integration-abstractions.csproj" />
+  </ItemGroup>
 
 </Project>

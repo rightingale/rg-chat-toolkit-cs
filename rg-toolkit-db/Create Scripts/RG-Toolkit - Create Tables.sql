@@ -363,6 +363,16 @@ insert into Tenant
 values
     (@tenantID, 'System')
 
+insert into Tenant
+    (Name)
+values
+    ('Bigstar')
+
+
+select @tenantID = ID
+from Tenant
+where name = 'Bigstar'
+
 declare @promptID uniqueidentifier = newID()
 insert into Prompt
     (TenantID, ID, Name, SystemPrompt, ReponseContentTypeName, DoStreamResponse)
@@ -429,6 +439,9 @@ values
 
 -- --- --- ---
 -- Sample data:
+
+use [RG-Toolkit]
+go
 
 select top 100
     *

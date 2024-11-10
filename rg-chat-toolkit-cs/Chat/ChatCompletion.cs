@@ -9,8 +9,10 @@ using rg_chat_toolkit_cs.Configuration;
 using System.Text.Json;
 using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 using rg_chat_toolkit_cs.Cache;
-using rg_integration_abstractions.Memory;
 using Azure.AI.OpenAI;
+using rg.integrations.epic.Tools.Memory;
+using rg_integration_abstractions.Tools;
+using rg_integration_abstractions.Tools.Memory;
 
 namespace rg_chat_toolkit_cs.Chat
 {
@@ -20,6 +22,8 @@ namespace rg_chat_toolkit_cs.Chat
         Dictionary<int, string> functionNamesByIndex = new();
         Dictionary<int, StringBuilder> functionArgumentBuildersByIndex = new();
 
+        Dictionary<string, ToolBase> toolsByName = new();
+
         public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools)
         {
             var contentBuilder = new StringBuilder();
@@ -27,15 +31,17 @@ namespace rg_chat_toolkit_cs.Chat
             // Init azure ai openai client
             var client = new OpenAIClient(ConfigurationHelper.OpenAIApiKey);
 
-            List<Message> messagesList = new List<Message>
-    {
-        new Message("system", systemPrompt)
-    };
+            List<Message> messagesList = new List<Message>{ new Message("system", systemPrompt) };
             messagesList.AddRange(messages);
 
             var options = new ChatCompletionsOptions("gpt-4o", messagesList.ToArray()?.ToChatRequestMessages());
-            options.Tools.Add(getWeatherTool);
-            options.Tools.Add(VectorStoreMemory.Instance);
+
+            // Tools:
+            FindGroceryItemVectorStoreMemory findGroceryItemTool = new FindGroceryItemVectorStoreMemory();
+            findGroceryItemTool.ToolName = "find_grocery_item";//Name, as defined in the DB
+            options.Tools.Add(findGroceryItemTool.GetToolDefinition());
+            toolsByName.Add(findGroceryItemTool.ToolName, findGroceryItemTool);
+
 
             var streamingResponse = await client.GetChatCompletionsStreamingAsync(options);
             if (streamingResponse != null)
@@ -152,43 +158,16 @@ namespace rg_chat_toolkit_cs.Chat
         /// </summary>
         internal async Task<Message> GetToolCallResponseMessage(Message toolCall)
         {
-            if (toolCall?.FunctionName == getWeatherTool.Name)
+            if (toolCall == null || string.IsNullOrEmpty(toolCall.FunctionName))
             {
-                string unvalidatedArguments = toolCall.FunctionAguments;
-
-                // Deserialize the JSON in unvalidatedArguments; get the latitude and longitude
-                // {"latitude": 35.1495, "longitude": -90.049, "unit": "celsius"}
-                var arguments = JsonSerializer.Deserialize<Dictionary<string, object>>(unvalidatedArguments);
-                decimal latitude;
-                decimal longitude;
-
-
-                if (arguments.TryGetValue("latitude", out object latitudeObj) && latitudeObj is JsonElement latitudeElement &&
-                        arguments.TryGetValue("longitude", out object longitudeObj) && longitudeObj is JsonElement longitudeElement)
-                {
-                    latitude = latitudeElement.GetDecimal();
-                    longitude = longitudeElement.GetDecimal();
-                }
-                else
-                {
-                    // Handle missing or invalid latitude or longitude
-                    throw new ArgumentException("Invalid arguments. 'latitude' and 'longitude' are required and must be decimal.");
-                }
-
-
-                // Lookup data via https://api.open-meteo.com/v1/forecast?latitude=35.1495&longitude=-90.0490&current=temperature_2m
-                const string URL_TEMPLATE = "https://api.open-meteo.com/v1/forecast?latitude={0}&longitude={1}&current=temperature_2m";
-
-                //decimal latitude = 35.1495m;
-                //decimal longitude = -90.0490m;
-                string url = String.Format(URL_TEMPLATE, latitude, longitude);
-                // Get whole URL contents as string: with HttpClient class
-                string htmlContent = await new System.Net.Http.HttpClient().GetStringAsync(url);
-                return new Message(role: "tool", content: htmlContent);
+                throw new ArgumentNullException(nameof(toolCall));
             }
-            else if (toolCall?.FunctionName == VectorStoreMemory.Instance.Name)
+
+            if (toolsByName.TryGetValue(toolCall.FunctionName, out ToolBase? value))
             {
-                return await (new VectorStoreMemory()).GetToolResponse(toolCall);
+                var tool = value;
+                var toolResponse = await tool.GetToolResponse(toolCall);
+                return toolResponse;
             }
             else
             {

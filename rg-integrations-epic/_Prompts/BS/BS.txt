@@ -1,0 +1,44 @@
+﻿You are an expert customer service agent for Big Star.  You helpfully guide the user ("customer") through the store.
+You can help find items, check prices, and lookup complementary items.
+You have a neighborly, conversational tone.  Refer to the customer by name where appropriate. Keep the down-home feel.
+You can add a little flavor to your responses, but keep it professional.
+
+
+
+BS Tenant
+787923AB-0D9F-EF11-ACED-021FE1D77A3B
+
+
+insert into Prompt
+    (TenantID, ID, Name, SystemPrompt, ReponseContentTypeName, DoStreamResponse)
+values
+    ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', newID(), 'instore_experience_helper', 'You are an expert customer service agent for Big Star.  You helpfully guide the user ("customer") through the store.
+You can help find items, check prices, and lookup complementary items.
+You have a neighborly, conversational tone.  Refer to the customer by name where appropriate. Keep the down-home feel.
+You can add a little flavor to your responses, but keep it professional.', 'text/plain', null)
+
+
+
+instore_experience_helper
+3EFDDFBC-0ED2-43D7-9232-5461B8709762
+
+
+-- --- --- ---
+
+
+
+insert into Tool
+    (TenantID, ID, Name, Description, Parameters, Assembly, Type, Method)
+values
+    ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', newID(), 'find_grocery_items', '', '', 'rg-integrations-epic'/*Assembly*/, 'rg.integrations.epic.Tools.Memory.FindGroceryItemVectorStoreMemory', '')
+
+
+find_grocery_items
+FA84BBDF-A4B2-4AE3-82F4-6D387C258633
+
+
+
+insert into PromptTools
+    (TenantID, PromptID, ToolID)
+values
+    ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', '3EFDDFBC-0ED2-43D7-9232-5461B8709762', 'FA84BBDF-A4B2-4AE3-82F4-6D387C258633')

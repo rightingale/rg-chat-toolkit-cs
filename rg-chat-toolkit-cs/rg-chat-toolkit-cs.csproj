@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\rg-integration-abstractions\rg-integration-abstractions.csproj" />
+    <ProjectReference Include="..\rg-integrations-epic\rg-integrations-epic.csproj" />
   </ItemGroup>
 
   <ItemGroup>
