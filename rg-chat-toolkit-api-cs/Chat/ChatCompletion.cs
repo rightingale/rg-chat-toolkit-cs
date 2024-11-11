@@ -1,9 +1,9 @@
-﻿using epic_retail_api_cs.Cache;
-using Microsoft.AspNetCore.Mvc;
-using rg.integrations.epic.Tools.Memory;
+﻿using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Data;
+using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
+using System.Diagnostics;
 using System.Text;
 
 namespace rg_chat_toolkit_api_cs.Chat;
@@ -46,6 +46,14 @@ public class ChatCompletionRequest : RequestBase
 [ApiController]
 public class ChatCompletionController : ControllerBase
 {
+    protected readonly IRGEmbeddingCache EmbeddingCache;
+    protected readonly ChatCompletion RGChatInstance;
+
+    public ChatCompletionController(IRGEmbeddingCache embeddingCache)
+    {
+        this.EmbeddingCache = embeddingCache;
+        RGChatInstance = new ChatCompletion(EmbeddingCache);
+    }
 
     [HttpPost("SendChatCompletion_Sync")]
     public async Task<IActionResult> SendChatCompletion_Sync([FromBody] ChatCompletionRequest request)
@@ -70,6 +78,10 @@ public class ChatCompletionController : ControllerBase
     [HttpPost]
     public async IAsyncEnumerable<string> SendChatCompletion([FromBody] ChatCompletionRequest request)
     {
+        // timer
+        var timer = new Stopwatch();
+        timer.Start();
+
         if (request.PromptName == null)
         {
             throw new ApplicationException("Prompt name is required.");
@@ -93,6 +105,7 @@ public class ChatCompletionController : ControllerBase
 
         // Lookup the prompt:
         var prompt = DataMethods.Prompt_Get(request.TenantID, request.PromptName);
+
         if (prompt?.SystemPrompt != null)
         {
             if (request.DoStreamResponse)
@@ -109,8 +122,7 @@ public class ChatCompletionController : ControllerBase
             }
 
             // Build the response:
-            var service = new ChatCompletion();
-            var response = service.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
+            var response = RGChatInstance.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
                                    true /*allowTools*/);
 
             if (request.DoStreamResponse)
@@ -130,9 +142,12 @@ public class ChatCompletionController : ControllerBase
                 // Join into 1 string:
                 var responseString = string.Join(String.Empty, responseList);
 
-                // Save in cache:
-                var cacheKey = RGCache.GetCacheKey(request.TenantID, request.SessionID, request.AccessKey);
-                await RGCache.Cache.Put(cacheKey, responseString);
+                // Save in cache: for related functions (e.g., SynthesizeSpeech).
+                var cacheKey = RGCache.Instance.GetMessageCacheKey(request.TenantID, request.SessionID, request.AccessKey);
+                await RGCache.Instance.Put(cacheKey, responseString);
+
+                timer.Stop();
+                Console.WriteLine($"API: {timer.ElapsedMilliseconds}ms");
 
                 yield return responseString;
             }

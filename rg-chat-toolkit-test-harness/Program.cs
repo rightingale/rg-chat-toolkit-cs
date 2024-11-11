@@ -1,10 +1,13 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
+using Microsoft.Extensions.Hosting;
 using OpenAIApiExample;
 using rg_chat_toolkit_api_cs.Chat;
+using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
 using rg_chat_toolkit_test_harness;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text;
@@ -20,6 +23,10 @@ namespace TestHarness
             //TestToolFunction();
 
             //TestToolFunctionGrocery();
+            TestToolFunctionGroceryApi();
+            TestToolFunctionGroceryApi();
+            TestToolFunctionGroceryApi();
+            TestToolFunctionGroceryApi();
             TestToolFunctionGroceryApi();
 
             //// Run TestToolFunction 10 times:
@@ -120,7 +127,7 @@ Code only.";
 
             Task.Run(async () =>
             {
-                ChatCompletion chatCompletion = new ChatCompletion();
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be very verbose.",
                     new[] {
                 new Message("system", "Respond in ES-419."),
@@ -158,7 +165,7 @@ Code only.";
                         new Message("user", "What is the current weather in Paris? Please give Celius, F, and Kelvin."),
                 }.ToList();
 
-                ChatCompletion chatCompletion = new ChatCompletion();
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
                     true /*allowTools*/);
@@ -179,14 +186,14 @@ Code only.";
 
             Task.Run(async () =>
             {
-                ChatCompletionController api = new ChatCompletionController();
+                ChatCompletionController api = new(new RGCache());
                 var responseAsync = api.SendChatCompletion(new ChatCompletionRequest()
                 {
                     TenantID = tenantID,
                     SessionID = sessionID,
                     AccessKey = accessKey,
                     PromptName = "instore_experience_helper",
-                    RequestMessageContent = "Do you have bleach?"
+                    RequestMessageContent = "Where is ground beef?"
                 });
 
                 StringBuilder stringBuilder = new StringBuilder();
@@ -212,7 +219,7 @@ Code only.";
                         new Message("user", "Sargento cheese"),
                 }.ToList();
 
-                ChatCompletion chatCompletion = new ChatCompletion();
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
                     true /*allowTools*/);

@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace epic_retail_api_cs.Cache
+namespace rg_chat_toolkit_api_cs.Cache
 {
     public class CacheService
     {

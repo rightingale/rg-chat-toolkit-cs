@@ -1,8 +1,6 @@
-﻿using epic_retail_api_cs.Cache;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Chat;
-using rg_chat_toolkit_cs.Speech;
 
 /*
 Sample JS fetch command for calling this api at http://localhost:5210/
@@ -57,14 +55,14 @@ public class SynthesizerController : ControllerBase
         try
         {
             // Check cache
-            var cacheKey = RGCache.GetCacheKey(request.TenantID, request.SessionID, request.AccessKey);
-            var sessionText = await RGCache.Cache.Get(cacheKey);
+            var cacheKey = RGCache.Instance.GetMessageCacheKey(request.TenantID, request.SessionID, request.AccessKey);
+            var sessionText = await RGCache.Instance.Get(cacheKey);
 
-            // Remove emojis
-            sessionText = System.Text.RegularExpressions.Regex.Replace(sessionText, @"\p{Cs}", "");
-
-            if (sessionText != null)
+            if (!String.IsNullOrEmpty(sessionText))
             {
+                // Remove emojis
+                sessionText = System.Text.RegularExpressions.Regex.Replace(sessionText, @"\p{Cs}", "");
+
                 rg_chat_toolkit_cs.Speech.Synthesizer synthesizer = new rg_chat_toolkit_cs.Speech.Synthesizer();
                 return new FileStreamResult(await synthesizer.SynthesizeSpeech(sessionText), "audio/mpeg")
                 {

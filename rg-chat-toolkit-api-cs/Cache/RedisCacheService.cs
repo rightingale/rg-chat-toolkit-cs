@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using StackExchange.Redis;
 
-namespace epic_retail_api_cs.Cache;
+namespace rg_chat_toolkit_api_cs.Cache;
 
 public class RedisCacheService : CacheService
 {

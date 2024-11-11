@@ -1,4 +1,8 @@
 
+using rg_chat_toolkit_api_cs.Cache;
+using rg_chat_toolkit_cs.Cache;
+using rg_chat_toolkit_cs.Chat;
+
 namespace rg_chat_toolkit_api_cs
 {
     public class Program
@@ -14,7 +18,13 @@ namespace rg_chat_toolkit_api_cs
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            // RG
+            builder.Services.AddSingleton<IRGEmbeddingCache, RGCache>();
+
             var app = builder.Build();
+
+            var embeddingCache = app.Services.GetRequiredService<IRGEmbeddingCache>();
+            RG.Instance = new RG(embeddingCache);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

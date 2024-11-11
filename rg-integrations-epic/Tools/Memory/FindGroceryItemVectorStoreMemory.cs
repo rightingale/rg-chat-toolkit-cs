@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Newtonsoft.Json;
 using rg.integration.interfaces.qdrant;
+using rg_chat_toolkit_cs.Cache;
 using rg_integration_abstractions.Embedding;
 using rg_integration_abstractions.Tools.Memory;
 using System;
@@ -36,10 +37,40 @@ public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
 
     public const string COLLECTION_NAME = "grocery-embeddings";
 
-    public const int TOP_N_RESULTS = 20;
+    public const int TOP_N_RESULTS = 10;
     protected override int TopN { get { return TOP_N_RESULTS; } }
 
-    protected override string ToolInterpretationPrompt
+    protected readonly QdrantHelper QDRANT;
+    protected readonly EmbeddingBase EMBEDDING;
+
+    public FindGroceryItemVectorStoreMemory(IRGEmbeddingCache embeddingCache)
+        : base(embeddingCache)
+    {
+        var openaiApiKey = config["openai-apikey"];
+        var openaiEndpoint = config["openai-endpoint-embeddings"];
+
+        if (String.IsNullOrEmpty(openaiApiKey) || String.IsNullOrEmpty(openaiEndpoint))
+        {
+            throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint.");
+        }
+        this.EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
+
+        var qdrantApiKey = config["qdrant-apikey"];
+        var qdrantEndpoint = config["qdrant-endpoint"];
+        var collectionName = COLLECTION_NAME;
+
+        if (String.IsNullOrEmpty(qdrantApiKey) || String.IsNullOrEmpty(qdrantEndpoint) || String.IsNullOrEmpty(collectionName))
+        {
+            throw new ApplicationException("Error: Invalid configuration. Missing qdrant-apikey, qdrant-endpoint, or qdrant-collection-name.");
+        }
+
+        this.QDRANT = new QdrantHelper(qdrantApiKey, qdrantEndpoint, collectionName, this.EMBEDDING);
+
+    }
+
+    // ---
+
+    public override string ToolInterpretationPrompt
     {
         get
         {
@@ -60,15 +91,7 @@ public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
     {
         get
         {
-            var openaiApiKey = config["openai-apikey"];
-            var openaiEndpoint = config["openai-endpoint-embeddings"];
-
-            if (String.IsNullOrEmpty(openaiApiKey) || String.IsNullOrEmpty(openaiEndpoint))
-            {
-                throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint.");
-            }
-
-            return new OpenAIEmbedding(openaiApiKey, openaiEndpoint);
+            return EMBEDDING;
         }
     }
 
@@ -76,16 +99,7 @@ public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
     {
         get
         {
-            var qdrantApiKey = config["qdrant-apikey"];
-            var qdrantEndpoint = config["qdrant-endpoint"];
-            var collectionName = COLLECTION_NAME;
-
-            if (String.IsNullOrEmpty(qdrantApiKey) || String.IsNullOrEmpty(qdrantEndpoint) || String.IsNullOrEmpty(collectionName))
-            {
-                throw new ApplicationException("Error: Invalid configuration. Missing qdrant-apikey, qdrant-endpoint, or qdrant-collection-name.");
-            }
-
-            return new QdrantHelper(qdrantApiKey, qdrantEndpoint, collectionName, this.EmbeddingModel);
+            return QDRANT;
         }
     }
 
@@ -112,6 +126,7 @@ public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
             new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
         };
     }
+
 }
 
 

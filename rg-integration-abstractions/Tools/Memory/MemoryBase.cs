@@ -11,7 +11,10 @@ namespace rg_integration_abstractions.Tools.Memory;
 
 public abstract class MemoryBase : ToolBase
 {
-    protected abstract string ToolInterpretationPrompt { get; }
+    public abstract string ToolInterpretationPrompt { get; }
     protected abstract int TopN { get; }
+    public bool DoPreload { get; set; } = false;
+
+    public abstract Task<Message?> Search(string text);
 
 }

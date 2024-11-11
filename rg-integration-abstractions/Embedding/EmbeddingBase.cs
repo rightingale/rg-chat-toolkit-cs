@@ -1,4 +1,5 @@
-﻿using System;
+﻿using rg_chat_toolkit_cs.Cache;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,13 @@ namespace rg_integration_abstractions.Embedding;
 
 public abstract class EmbeddingBase
 {
+    protected IRGEmbeddingCache? cache;
+
+    internal EmbeddingBase (IRGEmbeddingCache? cache)
+    {
+        this.cache = cache;
+    }
+
     public abstract Task<float[]?> GetEmbedding(string text);
 
     public abstract int EmbeddingSize { get; }

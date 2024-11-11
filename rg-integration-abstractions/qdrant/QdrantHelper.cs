@@ -29,7 +29,15 @@ public class QdrantHelper
 
     public async Task<String> Search(string text, int topN)
     {
+        // timer
+        var timer = new System.Diagnostics.Stopwatch();
+        timer.Start();
+
         var embedding = this.embeddingModel.GetEmbedding(text).Result;
+
+        // timer
+        timer.Stop();
+        Console.WriteLine($"Embedding took {timer.ElapsedMilliseconds} ms");
 
         // Search qdrant
         HttpClient httpClient = new();
@@ -67,7 +75,7 @@ public class QdrantHelper
             //    Console.Write(".");
             //}
 
-            Console.WriteLine(result.Item1.Payload["Text"] + "\t" + result.Item2);
+            //Console.WriteLine(result.Item1.Payload["Text"] + "\t" + result.Item2);
 
             var currentResult = result.Item1.Payload["Text"];
 
