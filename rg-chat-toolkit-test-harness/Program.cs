@@ -24,10 +24,10 @@ namespace TestHarness
 
             //TestToolFunctionGrocery();
             TestToolFunctionGroceryApi();
-            TestToolFunctionGroceryApi();
-            TestToolFunctionGroceryApi();
-            TestToolFunctionGroceryApi();
-            TestToolFunctionGroceryApi();
+            //TestToolFunctionGroceryApi();
+            //TestToolFunctionGroceryApi();
+            //TestToolFunctionGroceryApi();
+            //TestToolFunctionGroceryApi();
 
             //// Run TestToolFunction 10 times:
             //for (int i = 0; i < 10; i++)
@@ -133,7 +133,7 @@ Code only.";
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
                 new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order. Consider only family surname. But count distinct people as separate entries. Group by letter. Finally, which letter has the most entries?"),
-                }, true/*allowTools*/);
+                }, true/*allowTools*/, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -168,7 +168,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
-                    true /*allowTools*/);
+                    true /*allowTools*/, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -193,7 +193,7 @@ Code only.";
                     SessionID = sessionID,
                     AccessKey = accessKey,
                     PromptName = "instore_experience_helper",
-                    RequestMessageContent = "Where is ground beef?"
+                    RequestMessageContent = "Do you have large ice cream?"
                 });
 
                 StringBuilder stringBuilder = new StringBuilder();
@@ -222,7 +222,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
-                    true /*allowTools*/);
+                    true /*allowTools*/, null);
 
                 StringBuilder stringBuilder = new StringBuilder();
                 // Await foreach to process each response as it arrives
