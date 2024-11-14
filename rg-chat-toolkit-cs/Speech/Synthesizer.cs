@@ -24,17 +24,19 @@ namespace rg_chat_toolkit_cs.Speech
         /// <summary>
         /// languageCode: Example: "en-US", "es-MX"
         /// </summary>
-        public async Task<System.IO.Stream> SynthesizeSpeech(string text, string languageCode)
+        public async Task<System.IO.Stream> SynthesizeSpeech(string text, string? languageCode)
         {
             const string VOICE_ID_NAME_ENGLISH = "Danielle";
-            const string VOICE_ID_NAME_ENGLISH_MALE = "Gregory";//Neural
-            const string VOICE_ID_NAME_SPANISH = "Mia";
+            //const string VOICE_ID_NAME_ENGLISH_MALE = "Gregory";//Neural large voice
+            const string VOICE_ID_NAME_ENGLISH_MALE = "Stephen";//Generative sm male voice
+            //const string VOICE_ID_NAME_SPANISH = "Mia";//Spanish female
+            const string VOICE_ID_NAME_SPANISH = "Pedro";//Neural Spanish male sm voice
             string voiceId = VOICE_ID_NAME_ENGLISH_MALE;
-            var engine = Engine.Neural;
+            var engine = Engine.Generative;
             if (languageCode == LANGUAGECODE_SPANISH)
             {
                 voiceId = VOICE_ID_NAME_SPANISH;    
-                engine = Engine.Standard;
+                engine = Engine.Neural;
             }
 
             var client = new AmazonPollyClient(ConfigurationHelper.AWSAccessKeyId, ConfigurationHelper.AWSSecretAccessKey);

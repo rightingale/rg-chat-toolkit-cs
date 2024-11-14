@@ -14,6 +14,7 @@ public class RequestBase
     public Guid UserID { get; set; }
     public Guid SessionID { get; set; }
     public Guid AccessKey { get; set; }
+    public string? LanguageCode { get; set; }
 }
 
 
@@ -123,7 +124,7 @@ public class ChatCompletionController : ControllerBase
 
             // Build the response:
             var response = RGChatInstance.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
-                                   true /*allowTools*/);
+                                   true /*allowTools*/, request.LanguageCode);
 
             if (request.DoStreamResponse)
             {

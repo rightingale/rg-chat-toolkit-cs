@@ -44,9 +44,9 @@ Sample JSON for SynthesizeSpeechRequest API
 public class SynthesizerController : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> SynthesizeSpeech([FromQuery] Guid TenantID, [FromQuery] Guid SessionID, [FromQuery] Guid AccessKey)
+    public async Task<IActionResult> SynthesizeSpeech([FromQuery] Guid TenantID, [FromQuery] Guid SessionID, [FromQuery] Guid AccessKey, [FromQuery] string? LanguageCode)
     {
-        return await SynthesizeSpeech(new SynthesizeSpeechRequest() { TenantID = TenantID, SessionID = SessionID, AccessKey = AccessKey });
+        return await SynthesizeSpeech(new SynthesizeSpeechRequest() { TenantID = TenantID, SessionID = SessionID, AccessKey = AccessKey, LanguageCode = LanguageCode });
     }
 
     [HttpPost]
@@ -64,7 +64,7 @@ public class SynthesizerController : ControllerBase
                 sessionText = System.Text.RegularExpressions.Regex.Replace(sessionText, @"\p{Cs}", "");
 
                 rg_chat_toolkit_cs.Speech.Synthesizer synthesizer = new rg_chat_toolkit_cs.Speech.Synthesizer();
-                return new FileStreamResult(await synthesizer.SynthesizeSpeech(sessionText), "audio/mpeg")
+                return new FileStreamResult(await synthesizer.SynthesizeSpeech(sessionText, request.LanguageCode), "audio/mpeg")
                 {
                     FileDownloadName = "speech.mp3"
                 };

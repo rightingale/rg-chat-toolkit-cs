@@ -9,6 +9,8 @@ using rg.integrations.epic.Tools.Memory;
 using rg_integration_abstractions.Tools;
 using rg_integration_abstractions.Tools.Memory;
 using rg_chat_toolkit_cs.Cache;
+using Azure.Core;
+using rg_chat_toolkit_cs.Speech;
 
 namespace rg_chat_toolkit_cs.Chat;
 
@@ -21,7 +23,7 @@ public class ChatCompletion
         this.EmbeddingCache = embeddingCache;
     }
 
-    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools)
+    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? languageCode)
     {
         Dictionary<int, string> toolCallIdsByIndex = new();
         Dictionary<int, string> functionNamesByIndex = new();
@@ -35,6 +37,12 @@ public class ChatCompletion
 
         List<Message> messagesList = new List<Message> { new Message(Message.ROLE_SYSTEM, systemPrompt) };
         messagesList.AddRange(messages);
+
+        // Language:
+        if (languageCode == Synthesizer.LANGUAGECODE_SPANISH)
+        {
+            messagesList.Add(new Message(Message.ROLE_SYSTEM, "Reply in Spanish, ES-MX."));
+        }
 
         // Tools:
         FindGroceryItemVectorStoreMemory findGroceryItemTool = new FindGroceryItemVectorStoreMemory(this.EmbeddingCache);
@@ -136,7 +144,7 @@ public class ChatCompletion
                         newMessages.AddRange(messages);
                         newMessages.Add(new Message(role: Message.ROLE_SYSTEM, content: toolResponseMessage.Content));
                         ChatCompletion recursiveChatCompletion = new ChatCompletion(this.EmbeddingCache);
-                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false);
+                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, languageCode);
 
                         //// Add the TOOL request.
                         //var allMessages = handleAddMessage(toolRequestMessage);
