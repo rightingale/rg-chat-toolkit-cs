@@ -54,6 +54,16 @@ public class RGCache
         return RGCache.Cache.Put(key, value);
     }
 
+    public Task<ChatCompletionResponse?> GetResponse (string key)
+    {
+        return RGCache.Cache.Get<ChatCompletionResponse>(key);
+    }
+
+    public Task<bool> PutResponse (string key, ChatCompletionResponse value)
+    {
+        return RGCache.Cache.Put<ChatCompletionResponse>(key, value);
+    }
+
     public Task Remove(string key)
     {
         return RGCache.Cache.Remove(key);

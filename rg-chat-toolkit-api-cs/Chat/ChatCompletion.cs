@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Amazon.Polly;
+using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
+using rg_chat_toolkit_cs.Speech;
 using System.Diagnostics;
 using System.Text;
 
@@ -14,7 +16,6 @@ public class RequestBase
     public Guid UserID { get; set; }
     public Guid SessionID { get; set; }
     public Guid AccessKey { get; set; }
-    public string? LanguageCode { get; set; }
 }
 
 
@@ -23,6 +24,14 @@ public class ChatCompletionRequest : RequestBase
     public string? PromptName { get; set; }
     public string? RequestMessageContent { get; set; }
     public bool DoStreamResponse { get; set; } = false;
+    public string? Persona { get; set; } = null;
+    public string? LanguageCode { get; set; }
+}
+
+public class ChatCompletionResponse
+{
+    public ChatCompletionRequest? Request { get; set; }
+    public string? Response { get; set; }
 }
 
 
@@ -118,13 +127,12 @@ public class ChatCompletionController : ControllerBase
                 {
                     // Format Content type XXXX does not support streaming.
                     throw new ApplicationException($"Content type {prompt.ReponseContentTypeNameNavigation.Name} does not support streaming.");
-
                 }
             }
 
             // Build the response:
             var response = RGChatInstance.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
-                                   true /*allowTools*/, request.LanguageCode);
+                                   true /*allowTools*/, null, request.LanguageCode);
 
             if (request.DoStreamResponse)
             {
@@ -145,7 +153,14 @@ public class ChatCompletionController : ControllerBase
 
                 // Save in cache: for related functions (e.g., SynthesizeSpeech).
                 var cacheKey = RGCache.Instance.GetMessageCacheKey(request.TenantID, request.SessionID, request.AccessKey);
-                await RGCache.Instance.Put(cacheKey, responseString);
+                //await RGCache.Instance.Put(cacheKey, responseString);
+
+                var cacheResponse = new ChatCompletionResponse()
+                {
+                    Request = request,
+                    Response = responseString
+                };
+                await RGCache.Instance.PutResponse(cacheKey, cacheResponse);
 
                 timer.Stop();
                 Console.WriteLine($"API: {timer.ElapsedMilliseconds}ms");

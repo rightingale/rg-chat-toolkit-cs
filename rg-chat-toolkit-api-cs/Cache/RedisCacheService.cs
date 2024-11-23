@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using rg_chat_toolkit_api_cs.Chat;
 using StackExchange.Redis;
 
 namespace rg_chat_toolkit_api_cs.Cache;
@@ -78,6 +79,14 @@ public class RedisCacheService : CacheService
         }
     }
 
+    public async Task<string> Get(string key)
+    {
+        key = prefix + "-" + key;
+
+        IDatabase db = this.redis.GetDatabase();
+        return await db.StringGetAsync(key);
+    }
+
     public async Task<bool> Put(string key, string value)
     {
         key = prefix + "-" + key;
@@ -86,13 +95,35 @@ public class RedisCacheService : CacheService
         return await db.StringSetAsync(key, value, this.expiration, false);
     }
 
-    public async Task<string> Get(string key)
+    // Allow get for general objects
+    public async Task<T?> Get<T>(string key)
     {
         key = prefix + "-" + key;
 
         IDatabase db = this.redis.GetDatabase();
-        return await db.StringGetAsync(key);
+        var cachedJson = await db.StringGetAsync(key);
+
+        if (cachedJson.HasValue)
+        {
+            // Deserialize cached json:
+            var cachedValueDeserialized = JsonConvert.DeserializeObject<T?>(cachedJson);
+            return cachedValueDeserialized;
+        }
+        else
+        {
+            return default(T);
+        }
     }
+
+    public async Task<bool> Put<T>(string key, T value)
+    {
+        key = prefix + "-" + key;
+
+        IDatabase db = this.redis.GetDatabase();
+        string valueJson = JsonConvert.SerializeObject(value);
+        return await db.StringSetAsync(key, valueJson, this.expiration, false);
+    }
+
 
     public async Task Remove(string key)
     {

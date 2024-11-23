@@ -23,18 +23,23 @@ public partial class RgToolkitContext : DbContext
 
     public virtual DbSet<Object> Objects { get; set; }
 
+    public virtual DbSet<Persona> Personas { get; set; }
+
     public virtual DbSet<Prompt> Prompts { get; set; }
 
     public virtual DbSet<PromptFilter> PromptFilters { get; set; }
 
     public virtual DbSet<PromptObject> PromptObjects { get; set; }
 
+    public virtual DbSet<PromptPersona> PromptPersonas { get; set; }
+
     public virtual DbSet<PromptTool> PromptTools { get; set; }
+
+    public virtual DbSet<PromptVoice> PromptVoices { get; set; }
 
     public virtual DbSet<Tenant> Tenants { get; set; }
 
     public virtual DbSet<Tool> Tools { get; set; }
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -155,6 +160,39 @@ public partial class RgToolkitContext : DbContext
                 .HasConstraintName("FK_Object_TenantID");
         });
 
+        modelBuilder.Entity<Persona>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.Id });
+
+            entity.ToTable("Persona");
+
+            entity.HasIndex(e => new { e.TenantId, e.Id }, "IX_Persona_ID").IsUnique();
+
+            entity.HasIndex(e => new { e.TenantId, e.Name }, "IX_Persona_Name").IsUnique();
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Gender)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("Is_Active");
+            entity.Property(e => e.LanguageCode)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Name).HasMaxLength(100);
+        });
+
         modelBuilder.Entity<Prompt>(entity =>
         {
             entity.HasKey(e => new { e.TenantId, e.Id }).HasName("PK_Prompt_ID");
@@ -261,6 +299,47 @@ public partial class RgToolkitContext : DbContext
                 .HasConstraintName("FK_PromptObjects_PromptID_TenantID");
         });
 
+        modelBuilder.Entity<PromptPersona>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.Id });
+
+            entity.HasIndex(e => new { e.TenantId, e.Id }, "IX_PromptPersonas_ID").IsUnique();
+
+            entity.HasIndex(e => new { e.TenantId, e.PromptId, e.Ordinal }, "IX_PromptPersonas_Ordinal")
+                .IsUnique()
+                .HasFilter("([Is_Active]=(1))");
+
+            entity.HasIndex(e => new { e.TenantId, e.PromptId, e.PersonaId }, "IX_PromptPersonas_PromptID_PersonaID")
+                .IsUnique()
+                .HasFilter("([Is_Active]=(1))");
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("Is_Active");
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.PersonaId).HasColumnName("PersonaID");
+            entity.Property(e => e.PromptId).HasColumnName("PromptID");
+
+            entity.HasOne(d => d.Persona).WithMany(p => p.PromptPersonas)
+                .HasForeignKey(d => new { d.TenantId, d.PersonaId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptPersonas_Persona");
+
+            entity.HasOne(d => d.Prompt).WithMany(p => p.PromptPersonas)
+                .HasForeignKey(d => new { d.TenantId, d.PromptId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptPersonas_Prompt");
+        });
+
         modelBuilder.Entity<PromptTool>(entity =>
         {
             entity.HasKey(e => new { e.TenantId, e.Id }).HasName("PK_PromptTools_ID");
@@ -280,6 +359,27 @@ public partial class RgToolkitContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.PromptId).HasColumnName("PromptID");
             entity.Property(e => e.ToolId).HasColumnName("ToolID");
+        });
+
+        modelBuilder.Entity<PromptVoice>(entity =>
+        {
+            entity.HasNoKey();
+
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("Is_Active");
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.PromptId).HasColumnName("PromptID");
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.VoiceId).HasColumnName("VoiceID");
         });
 
         modelBuilder.Entity<Tenant>(entity =>

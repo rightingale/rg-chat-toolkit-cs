@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Chat;
+using rg_chat_toolkit_api_cs.Data;
+using rg_chat_toolkit_cs.Speech;
 
 /*
 Sample JS fetch command for calling this api at http://localhost:5210/
@@ -44,9 +46,9 @@ Sample JSON for SynthesizeSpeechRequest API
 public class SynthesizerController : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> SynthesizeSpeech([FromQuery] Guid TenantID, [FromQuery] Guid SessionID, [FromQuery] Guid AccessKey, [FromQuery] string? LanguageCode)
+    public async Task<IActionResult> SynthesizeSpeech([FromQuery] Guid TenantID, [FromQuery] Guid SessionID, [FromQuery] Guid AccessKey)
     {
-        return await SynthesizeSpeech(new SynthesizeSpeechRequest() { TenantID = TenantID, SessionID = SessionID, AccessKey = AccessKey, LanguageCode = LanguageCode });
+        return await SynthesizeSpeech(new SynthesizeSpeechRequest() { TenantID = TenantID, SessionID = SessionID, AccessKey = AccessKey });
     }
 
     [HttpPost]
@@ -56,7 +58,45 @@ public class SynthesizerController : ControllerBase
         {
             // Check cache
             var cacheKey = RGCache.Instance.GetMessageCacheKey(request.TenantID, request.SessionID, request.AccessKey);
-            var sessionText = await RGCache.Instance.Get(cacheKey);
+            //var sessionText = await RGCache.Instance.Get(cacheKey);
+
+            // We can only render text from valid session responses:
+            var cacheResponse = await RGCache.Instance.GetResponse(cacheKey);
+            var sessionText = cacheResponse?.Response;
+            var originalRequest = cacheResponse?.Request;
+
+            if (originalRequest == null)
+            {
+                throw new ApplicationException("No session content was found.");
+            }
+
+            string voiceName = null;
+            if (originalRequest.Persona != null && originalRequest.PromptName != null)
+            {
+                var persona = DataMethods.Persona_Get(request.TenantID, originalRequest.PromptName, originalRequest.Persona);
+                if (persona?.Name != null)
+                {
+                    const string GENDER_MALE = "M";
+                    const string GENDER_FEMALE = "F";
+                    if (originalRequest?.LanguageCode == Synthesizer.LANGUAGECODE_SPANISH
+                        && persona.Gender == GENDER_MALE)
+                    {
+                        voiceName = Synthesizer.VOICE_DEFAULT_MALE_SPANISH;
+                    }
+                    else if (originalRequest?.LanguageCode == Synthesizer.LANGUAGECODE_SPANISH)
+                    {
+                        voiceName = Synthesizer.VOICE_DEFAULT_FEMALE_SPANISH;
+                    }
+                    else if (persona.Gender == GENDER_MALE)
+                    {
+                        voiceName = Synthesizer.VOICE_DEFAULT_MALE_ENGLISH;
+                    }
+                    else if (persona.Gender == GENDER_FEMALE)
+                    {
+                        voiceName = Synthesizer.VOICE_DEFAULT_FEMALE_ENGLISH;
+                    }
+                }
+            }
 
             if (!String.IsNullOrEmpty(sessionText))
             {
@@ -64,7 +104,7 @@ public class SynthesizerController : ControllerBase
                 sessionText = System.Text.RegularExpressions.Regex.Replace(sessionText, @"\p{Cs}", "");
 
                 rg_chat_toolkit_cs.Speech.Synthesizer synthesizer = new rg_chat_toolkit_cs.Speech.Synthesizer();
-                return new FileStreamResult(await synthesizer.SynthesizeSpeech(sessionText, request.LanguageCode), "audio/mpeg")
+                return new FileStreamResult(await synthesizer.SynthesizeSpeech(sessionText, voiceName, originalRequest?.LanguageCode), "audio/mpeg")
                 {
                     FileDownloadName = "speech.mp3"
                 };

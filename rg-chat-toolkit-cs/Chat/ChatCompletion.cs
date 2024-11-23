@@ -23,7 +23,7 @@ public class ChatCompletion
         this.EmbeddingCache = embeddingCache;
     }
 
-    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? languageCode)
+    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? voiceName, string? languageCode)
     {
         Dictionary<int, string> toolCallIdsByIndex = new();
         Dictionary<int, string> functionNamesByIndex = new();
@@ -41,7 +41,7 @@ public class ChatCompletion
         // Language:
         if (languageCode == Synthesizer.LANGUAGECODE_SPANISH)
         {
-            messagesList.Add(new Message(Message.ROLE_SYSTEM, "Reply in Spanish, ES-MX."));
+            messagesList.Add(new Message(Message.ROLE_SYSTEM, "Reply only in Spanish, ES-MX."));
         }
 
         // Tools:
@@ -144,7 +144,7 @@ public class ChatCompletion
                         newMessages.AddRange(messages);
                         newMessages.Add(new Message(role: Message.ROLE_SYSTEM, content: toolResponseMessage.Content));
                         ChatCompletion recursiveChatCompletion = new ChatCompletion(this.EmbeddingCache);
-                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, languageCode);
+                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, null, languageCode);
 
                         //// Add the TOOL request.
                         //var allMessages = handleAddMessage(toolRequestMessage);
