@@ -14,7 +14,7 @@ namespace rg_chat_toolkit_cs.Speech
     public class Synthesizer
     {
         public const string LANGUAGECODE_ENGLISH = "en-US";
-        public const string LANGUAGECODE_SPANISH = "es-US";
+        public const string LANGUAGECODE_SPANISH = "es";
 
         public const string VOICE_DEFAULT_MALE_ENGLISH = "Stephen";
         public const string VOICE_ENGINE_MALE_ENGLISH = "Generative";
@@ -47,7 +47,7 @@ namespace rg_chat_toolkit_cs.Speech
 
             string voiceId = voiceName ?? VOICE_DEFAULT_FEMALE_ENGLISH;
             var engine = Engine.Generative;
-            if (languageCode == LANGUAGECODE_SPANISH)
+            if (languageCode?.ToLower()?.StartsWith(LANGUAGECODE_SPANISH) == true)
             {
                 voiceId = voiceName ?? VOICE_DEFAULT_FEMALE_SPANISH;
                 engine = Engine.Neural;

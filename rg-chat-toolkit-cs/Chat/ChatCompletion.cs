@@ -39,7 +39,7 @@ public class ChatCompletion
         messagesList.AddRange(messages);
 
         // Language:
-        if (languageCode == Synthesizer.LANGUAGECODE_SPANISH)
+        if (languageCode?.ToLower()?.StartsWith(Synthesizer.LANGUAGECODE_SPANISH) == true)
         {
             messagesList.Add(new Message(Message.ROLE_SYSTEM, "Reply only in Spanish, ES-MX."));
         }

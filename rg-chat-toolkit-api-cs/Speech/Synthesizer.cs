@@ -78,12 +78,12 @@ public class SynthesizerController : ControllerBase
                 {
                     const string GENDER_MALE = "M";
                     const string GENDER_FEMALE = "F";
-                    if (originalRequest?.LanguageCode == Synthesizer.LANGUAGECODE_SPANISH
+                    if (originalRequest?.LanguageCode?.ToLower()?.StartsWith(Synthesizer.LANGUAGECODE_SPANISH) == true
                         && persona.Gender == GENDER_MALE)
                     {
                         voiceName = Synthesizer.VOICE_DEFAULT_MALE_SPANISH;
                     }
-                    else if (originalRequest?.LanguageCode == Synthesizer.LANGUAGECODE_SPANISH)
+                    else if (originalRequest?.LanguageCode?.ToLower()?.StartsWith(Synthesizer.LANGUAGECODE_SPANISH) == true)
                     {
                         voiceName = Synthesizer.VOICE_DEFAULT_FEMALE_SPANISH;
                     }
