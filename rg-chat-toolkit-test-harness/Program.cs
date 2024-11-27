@@ -201,8 +201,8 @@ Code only.";
                     AccessKey = accessKey,
                     PromptName = "instore_experience_helper",
                     RequestMessageContent = "Do you have large ice cream?",
-                    Persona = "chef_female",
-                    LanguageCode = "es-US"
+                    //Persona = "chef_female",
+                    LanguageCode = "es"
                 });
 
                 StringBuilder stringBuilder = new StringBuilder();
@@ -222,36 +222,43 @@ Code only.";
             Guid sessionID = Guid.Parse("00000000-0000-0000-0000-000000000000");
             Guid accessKey = Guid.Parse("00000000-0000-0000-0000-000000000000");
 
-            Task.Run(async () =>
+            try
             {
-                SynthesizerController api = new();
-                var speechResponseAsync = await api.SynthesizeSpeech(new rg_chat_toolkit_api_cs.Speech.SynthesizeSpeechRequest()
+                Task.Run(async () =>
                 {
-                    TenantID = tenantID,
-                    SessionID = sessionID,
-                    AccessKey = accessKey,
-                    DoStreamResponse = false
-                });
+                    SynthesizerController api = new();
+                    var speechResponseAsync = await api.SynthesizeSpeech(new rg_chat_toolkit_api_cs.Speech.SynthesizeSpeechRequest()
+                    {
+                        TenantID = tenantID,
+                        SessionID = sessionID,
+                        AccessKey = accessKey,
+                        DoStreamResponse = false
+                    });
 
-                // Upcast to FileStreamResult
-                FileStreamResult speechResponse = (FileStreamResult)speechResponseAsync;
-                var responseStream = speechResponse.FileStream;
+                    // Upcast to FileStreamResult
+                    FileStreamResult speechResponse = (FileStreamResult)speechResponseAsync;
+                    var responseStream = speechResponse.FileStream;
 
-                // Stream bytes into "c:\temp\speech.mp3"
-                using (var fileStream = System.IO.File.Create("c:\\temp\\speech.mp3"))
-                {
-                    // Stream the results from speechResponse into fileStream
-                    await responseStream.CopyToAsync(fileStream);
-                }
+                    // Stream bytes into "c:\temp\speech.mp3"
+                    using (var fileStream = System.IO.File.Create("c:\\temp\\speech.mp3"))
+                    {
+                        // Stream the results from speechResponse into fileStream
+                        await responseStream.CopyToAsync(fileStream);
+                    }
 
-                System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "explorer.exe",
-                    UseShellExecute = false,
-                    Arguments = "c:\\temp\\speech.mp3"
-                };
-                System.Diagnostics.Process.Start(psi);
-            }).Wait();
+                    System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "explorer.exe",
+                        UseShellExecute = false,
+                        Arguments = "c:\\temp\\speech.mp3"
+                    };
+                    System.Diagnostics.Process.Start(psi);
+                }).Wait();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         public static void TestToolFunctionGrocery()
