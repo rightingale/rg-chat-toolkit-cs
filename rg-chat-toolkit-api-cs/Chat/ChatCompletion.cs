@@ -132,7 +132,7 @@ public class ChatCompletionController : ControllerBase
 
             // Build the response:
             var response = RGChatInstance.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
-                                   true /*allowTools*/, null, request.LanguageCode);
+                                   true /*allowTools*/, null, request.LanguageCode, prompt.ReponseContentTypeName);
 
             if (request.DoStreamResponse)
             {

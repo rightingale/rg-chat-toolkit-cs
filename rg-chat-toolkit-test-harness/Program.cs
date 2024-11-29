@@ -27,8 +27,10 @@ namespace TestHarness
 
             //TestToolFunctionGrocery();
 
-            TestToolFunctionGroceryApi();
-            TestSpeechApi();
+            TestTilleyNavigation();
+
+            //TestToolFunctionGroceryApi();
+            //TestSpeechApi();
 
             //TestToolFunctionGroceryApi();
             //TestToolFunctionGroceryApi();
@@ -50,6 +52,37 @@ namespace TestHarness
             //TestClaude();
 
             //TestWebScraper();
+        }
+
+        public static void TestTilleyNavigation()
+        {
+            Guid tenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08");
+            Guid sessionID = Guid.Parse("00000000-0000-0000-0000-000000000000");
+            Guid accessKey = Guid.Parse("00000000-0000-0000-0000-000000000000");
+
+            Task.Run(async () =>
+            {
+                ChatCompletionController api = new(new RGCache());
+                var responseAsync = api.SendChatCompletion(new ChatCompletionRequest()
+                {
+                    TenantID = tenantID,
+                    SessionID = sessionID,
+                    AccessKey = accessKey,
+                    PromptName = "tilley_navigation",
+                    RequestMessageContent = "report all my farms",
+                    //Persona = "chef_female",
+                    //LanguageCode = "en"
+                });
+
+                StringBuilder stringBuilder = new StringBuilder();
+                // Await foreach to process each response as it arrives
+                await foreach (var str in responseAsync)
+                {
+                    stringBuilder.Append(str);
+                }
+
+                Console.WriteLine(stringBuilder.ToString());
+            }).Wait();
         }
 
         public static void TestClaude()
@@ -140,7 +173,7 @@ Code only.";
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
                 new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order. Consider only family surname. But count distinct people as separate entries. Group by letter. Finally, which letter has the most entries?"),
-                }, true/*allowTools*/, null, null);
+                }, true/*allowTools*/, null, null, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -175,7 +208,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
-                    true /*allowTools*/, null, null);
+                    true /*allowTools*/, null, null, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -276,7 +309,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
-                    true /*allowTools*/, null, null);
+                    true /*allowTools*/, null, null, null);
 
                 StringBuilder stringBuilder = new StringBuilder();
                 // Await foreach to process each response as it arrives
