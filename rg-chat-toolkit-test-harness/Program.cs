@@ -4,6 +4,7 @@ using Azure.AI.OpenAI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using OpenAIApiExample;
+using rg_chat_toolkit_api_cs;
 using rg_chat_toolkit_api_cs.Chat;
 using rg_chat_toolkit_api_cs.Speech;
 using rg_chat_toolkit_cs.Cache;
@@ -21,6 +22,9 @@ namespace TestHarness
     {
         static void Main(string[] args)
         {
+            var embeddingCache = new RGCache();
+            RG.Instance = new RG(embeddingCache);
+
             //TestChatCompletion();
 
             //TestToolFunction();
@@ -69,7 +73,7 @@ namespace TestHarness
                     SessionID = sessionID,
                     AccessKey = accessKey,
                     PromptName = "tilley_navigation",
-                    RequestMessageContent = "report all my farms",
+                    RequestMessageContent = "Farm expenses",
                     //Persona = "chef_female",
                     //LanguageCode = "en"
                 });
@@ -173,7 +177,7 @@ Code only.";
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
                 new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order. Consider only family surname. But count distinct people as separate entries. Group by letter. Finally, which letter has the most entries?"),
-                }, true/*allowTools*/, null, null, null);
+                }, true/*allowTools*/, null, null, null, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -208,7 +212,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
-                    true /*allowTools*/, null, null, null);
+                    true /*allowTools*/, null, null, null, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -309,7 +313,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
-                    true /*allowTools*/, null, null, null);
+                    true /*allowTools*/, null, null, null, null);
 
                 StringBuilder stringBuilder = new StringBuilder();
                 // Await foreach to process each response as it arrives

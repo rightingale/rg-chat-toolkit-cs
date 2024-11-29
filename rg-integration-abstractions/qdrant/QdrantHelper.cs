@@ -77,7 +77,7 @@ public class QdrantHelper
 
             //Console.WriteLine(result.Item1.Payload["Text"] + "\t" + result.Item2);
 
-            var currentResult = result.Item1.Payload["Text"];
+            var currentResult = result.Item1.Payload["json"];
 
             stringBuilder.AppendLine(currentResult.ToString());
         }

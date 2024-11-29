@@ -5,6 +5,7 @@ using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
+using rg_integration_abstractions.Tools.Memory;
 using System.Diagnostics;
 using System.Text;
 
@@ -130,9 +131,17 @@ public class ChatCompletionController : ControllerBase
                 }
             }
 
+            // Construct memories:
+            var memories = new List<MemoryBase>();
+            foreach (var promptMemory in prompt.PromptMemories.Where(mem => mem.Memory.IsActive))
+            {
+                var memory = MemoryBase.Create(promptMemory.Memory.Name, promptMemory.Memory.Description, promptMemory.Memory.MemoryType, RG.Instance.EmbeddingCache);
+                memories.Add(memory);
+            }
+
             // Build the response:
             var response = RGChatInstance.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
-                                   true /*allowTools*/, null, request.LanguageCode, prompt.ReponseContentTypeName);
+                                   true /*allowTools*/, null, request.LanguageCode, prompt.ReponseContentTypeName, memories);
 
             if (request.DoStreamResponse)
             {

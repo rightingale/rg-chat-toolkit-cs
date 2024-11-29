@@ -21,6 +21,8 @@ public partial class RgToolkitContext : DbContext
 
     public virtual DbSet<Filter> Filters { get; set; }
 
+    public virtual DbSet<Memory> Memories { get; set; }
+
     public virtual DbSet<Object> Objects { get; set; }
 
     public virtual DbSet<Persona> Personas { get; set; }
@@ -29,17 +31,21 @@ public partial class RgToolkitContext : DbContext
 
     public virtual DbSet<PromptFilter> PromptFilters { get; set; }
 
+    public virtual DbSet<PromptMemory> PromptMemories { get; set; }
+
     public virtual DbSet<PromptObject> PromptObjects { get; set; }
 
     public virtual DbSet<PromptPersona> PromptPersonas { get; set; }
 
     public virtual DbSet<PromptTool> PromptTools { get; set; }
 
-    public virtual DbSet<PromptVoice> PromptVoices { get; set; }
-
     public virtual DbSet<Tenant> Tenants { get; set; }
 
     public virtual DbSet<Tool> Tools { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=db.TEST.datanac.io;Database=RG-Toolkit;User ID=admin;Password=predictiveAnalyticsEmpowersTheFarm;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -121,6 +127,40 @@ public partial class RgToolkitContext : DbContext
                 .HasForeignKey(d => d.TenantId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Filter_TenantID");
+        });
+
+        modelBuilder.Entity<Memory>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.Id });
+
+            entity.ToTable("Memory");
+
+            entity.HasIndex(e => new { e.TenantId, e.Id }, "IX_Memory_ID").IsUnique();
+
+            entity.HasIndex(e => new { e.TenantId, e.Name }, "IX_Memory_Name").IsUnique();
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("Is_Active");
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.MemoryType)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.Name).HasMaxLength(100);
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.Memories)
+                .HasForeignKey(d => d.TenantId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Memory_TenantID");
         });
 
         modelBuilder.Entity<Object>(entity =>
@@ -266,6 +306,47 @@ public partial class RgToolkitContext : DbContext
                 .HasConstraintName("FK_PromptFilters_PromptID");
         });
 
+        modelBuilder.Entity<PromptMemory>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.Id });
+
+            entity.HasIndex(e => new { e.TenantId, e.Id }, "IX_PromptMemories_ID").IsUnique();
+
+            entity.HasIndex(e => new { e.TenantId, e.PromptId, e.Ordinal }, "IX_PromptMemories_Ordinal")
+                .IsUnique()
+                .HasFilter("([Is_Active]=(1))");
+
+            entity.HasIndex(e => new { e.TenantId, e.PromptId, e.MemoryId }, "IX_PromptMemories_PromptID_MemoryID")
+                .IsUnique()
+                .HasFilter("([Is_Active]=(1))");
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("Is_Active");
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.MemoryId).HasColumnName("MemoryID");
+            entity.Property(e => e.PromptId).HasColumnName("PromptID");
+
+            entity.HasOne(d => d.Memory).WithMany(p => p.PromptMemories)
+                .HasForeignKey(d => new { d.TenantId, d.MemoryId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptMemories_MemoryID");
+
+            entity.HasOne(d => d.Prompt).WithMany(p => p.PromptMemories)
+                .HasForeignKey(d => new { d.TenantId, d.PromptId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptMemories_PromptID");
+        });
+
         modelBuilder.Entity<PromptObject>(entity =>
         {
             entity.HasKey(e => new { e.TenantId, e.Id }).HasName("PK_PromptObjects_ID");
@@ -359,27 +440,6 @@ public partial class RgToolkitContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.PromptId).HasColumnName("PromptID");
             entity.Property(e => e.ToolId).HasColumnName("ToolID");
-        });
-
-        modelBuilder.Entity<PromptVoice>(entity =>
-        {
-            entity.HasNoKey();
-
-            entity.Property(e => e.CreateDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Id)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("ID");
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue(true)
-                .HasColumnName("Is_Active");
-            entity.Property(e => e.LastUpdate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.PromptId).HasColumnName("PromptID");
-            entity.Property(e => e.TenantId).HasColumnName("TenantID");
-            entity.Property(e => e.VoiceId).HasColumnName("VoiceID");
         });
 
         modelBuilder.Entity<Tenant>(entity =>

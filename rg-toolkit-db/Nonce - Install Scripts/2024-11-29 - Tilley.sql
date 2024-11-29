@@ -59,9 +59,14 @@ select * from Prompt where Name = 'tilley_navigation'
 -- Create memory d6566df7-d61b-42dd-abe7-e121af01c2e6
 
 insert into Memory (TenantID, ID, Name, Description, MemoryType, Is_Active, CreateDate, LastUpdate)
-values ('902544da-67e6-4fa8-a346-d1faa8b27a08', 'd6566df7-d61b-42dd-abe7-e121af01c2e6', 'tilley_navigation', 'Tilley navigation items', 'json', 1, getdate(), getdate())
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', 'd6566df7-d61b-42dd-abe7-e121af01c2e6', 'tilley_navigation', 'Tilley navigation items', 'vector/in-memory', 1, getdate(), getdate())
 
 insert into PromptMemories (TenantID, ID, PromptID, MemoryID, Ordinal, Is_Active, CreateDate, LastUpdate)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', newID(), '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'd6566df7-d61b-42dd-abe7-e121af01c2e6', 0, 1, getdate(), getdate())
 
 -- --- ---
+
+select * from Memory where Name = 'tilley_navigation'
+
+select * from PromptMemories where PromptID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
+

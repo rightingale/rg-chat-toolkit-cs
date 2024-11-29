@@ -25,6 +25,8 @@ public partial class Prompt
 
     public virtual ICollection<PromptFilter> PromptFilters { get; set; } = new List<PromptFilter>();
 
+    public virtual ICollection<PromptMemory> PromptMemories { get; set; } = new List<PromptMemory>();
+
     public virtual ICollection<PromptObject> PromptObjects { get; set; } = new List<PromptObject>();
 
     public virtual ICollection<PromptPersona> PromptPersonas { get; set; } = new List<PromptPersona>();

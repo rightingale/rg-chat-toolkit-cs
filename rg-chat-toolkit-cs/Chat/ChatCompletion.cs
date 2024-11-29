@@ -27,7 +27,7 @@ public class ChatCompletion
         this.EmbeddingCache = embeddingCache;
     }
 
-    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? voiceName, string? languageCode, string? responseFormat)
+    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? voiceName, string? languageCode, string? responseFormat, List<MemoryBase> memories)
     {
         Dictionary<int, string> toolCallIdsByIndex = new();
         Dictionary<int, string> functionNamesByIndex = new();
@@ -46,6 +46,22 @@ public class ChatCompletion
         if (languageCode?.ToLower()?.StartsWith(Synthesizer.LANGUAGECODE_SPANISH) == true)
         {
             messagesList.Add(new Message(Message.ROLE_SYSTEM, "Reply only in Spanish, ES-MX."));
+        }
+
+
+        // Memory:
+        if (messages.Length > 0)
+        {
+            foreach (var memory in memories)
+            {
+                var searchResults = await memory.Search(messages[0].Content);
+
+                if (searchResults != null)
+                {
+                    Console.WriteLine("Search results:\n\n\t" + searchResults.Content + "\n\n");
+                    messagesList.Add(new Message(Message.ROLE_SYSTEM, searchResults.Content));
+                }
+            }
         }
 
         // Tools:
@@ -156,7 +172,7 @@ public class ChatCompletion
                         newMessages.AddRange(messages);
                         newMessages.Add(new Message(role: Message.ROLE_SYSTEM, content: toolResponseMessage.Content));
                         ChatCompletion recursiveChatCompletion = new ChatCompletion(this.EmbeddingCache);
-                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, null, languageCode, responseFormat);
+                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, null, languageCode, responseFormat, memories);
 
                         //// Add the TOOL request.
                         //var allMessages = handleAddMessage(toolRequestMessage);

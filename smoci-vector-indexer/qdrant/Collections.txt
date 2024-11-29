@@ -8,6 +8,11 @@ PUT /collections/grocery-embeddings
 
 
 
+
+
+DELETE collections/memory
+
+
 PUT /collections/memory
 {
     "vectors": {
@@ -15,3 +20,4 @@ PUT /collections/memory
       "distance": "Cosine"
     }
 }
+

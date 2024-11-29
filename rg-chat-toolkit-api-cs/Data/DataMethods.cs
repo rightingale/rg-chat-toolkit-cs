@@ -49,6 +49,8 @@ public static partial class DataMethods
         var db = RGDatabaseContextFactory.Instance.CreateDbContext();
         var returnVal = db.Prompts
             .Include(p => p.ReponseContentTypeNameNavigation)
+            .Include(p => p.PromptMemories)
+            .ThenInclude(pm => pm.Memory)
             .Where(p =>
                 p.TenantId == tenantID
                 && p.Name == name
