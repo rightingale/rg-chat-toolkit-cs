@@ -2,6 +2,8 @@
 using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using OpenAIApiExample;
 using rg_chat_toolkit_api_cs;
@@ -11,6 +13,9 @@ using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
 using rg_chat_toolkit_test_harness;
+using rg_integration_abstractions.Embedding;
+using rg_integration_abstractions.InMemoryVector;
+using rg_integration_abstractions.Tools.Memory;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -25,13 +30,18 @@ namespace TestHarness
             var embeddingCache = new RGCache();
             RG.Instance = new RG(embeddingCache);
 
+            Task.Run(async () =>
+            {
+                await TestInMemoryVectorStore();
+            }).Wait();
+
             //TestChatCompletion();
 
             //TestToolFunction();
 
             //TestToolFunctionGrocery();
 
-            TestTilleyNavigation();
+            //TestTilleyNavigation();
 
             //TestToolFunctionGroceryApi();
             //TestSpeechApi();
@@ -58,6 +68,63 @@ namespace TestHarness
             //TestWebScraper();
         }
 
+        public static async Task TestInMemoryVectorStore()
+        {
+            var embeddingCache = RG.Instance.EmbeddingCache;
+
+            var config = new ConfigurationManager()
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+                .AddUserSecrets<InMemoryVectorStoreMemory>()
+                .AddEnvironmentVariables()
+                .Build();
+
+            var openaiApiKey = config["openai-apikey"];
+            var openaiEndpoint = config["openai-endpoint-embeddings"];
+            if (String.IsNullOrEmpty(openaiApiKey) || String.IsNullOrEmpty(openaiEndpoint))
+            {
+                throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
+            }
+            var EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
+
+            var memoryItems = new List<InMemoryVectorStore.KeyValueItem>();
+            memoryItems.Add(new InMemoryVectorStore.KeyValueItem()
+            {
+                Key = "information",
+                Value = "Find store information, including phone number, address, email, and directions.",
+                ValueEmbedding = []
+            });
+            memoryItems.Add(new InMemoryVectorStore.KeyValueItem()
+            {
+                Key = "tilley_navigation",
+                Value = "Navigate: 'Go To' or 'Show Me' certain pages.",
+                ValueEmbedding = []
+            });
+            memoryItems.Add(new InMemoryVectorStore.KeyValueItem()
+            {
+                Key = "logout",
+                Value = "Quit: 'Exit' or 'Close' the application.",
+                ValueEmbedding = []
+            });
+
+            InMemoryVectorStore vectorStore = new InMemoryVectorStore();
+            foreach (var memoryItem in memoryItems)
+            {
+                memoryItem.ValueEmbedding = await EMBEDDING.GetEmbedding(memoryItem.Value);
+                vectorStore.Add(memoryItem);
+            }
+
+            // Find match:
+            string searchQuery = "contact customer support";
+            var searchEmbedding = await EMBEDDING.GetEmbedding(searchQuery);
+            var searchResponse = vectorStore.Search(searchEmbedding, 10);
+
+            Console.WriteLine("Search results:");
+            foreach (var currentResult in searchResponse)
+            {
+                Console.WriteLine(currentResult.Item.Key + "\t" + currentResult.Distance);
+            }
+        }
+
         public static void TestTilleyNavigation()
         {
             Guid tenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08");
@@ -73,7 +140,7 @@ namespace TestHarness
                     SessionID = sessionID,
                     AccessKey = accessKey,
                     PromptName = "tilley_navigation",
-                    RequestMessageContent = "Farm expenses",
+                    RequestMessageContent = "customer support email",
                     //Persona = "chef_female",
                     //LanguageCode = "en"
                 });

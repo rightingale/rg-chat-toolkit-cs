@@ -1,3 +1,6 @@
+use [RG-Toolkit]
+go
+
 -- Create Tenant Tilley 902544da-67e6-4fa8-a346-d1faa8b27a08
 
 insert into Tenant (ID, Name, CreateDate, LastUpdate)
@@ -64,9 +67,12 @@ values ('902544da-67e6-4fa8-a346-d1faa8b27a08', 'd6566df7-d61b-42dd-abe7-e121af0
 insert into PromptMemories (TenantID, ID, PromptID, MemoryID, Ordinal, Is_Active, CreateDate, LastUpdate)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', newID(), '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'd6566df7-d61b-42dd-abe7-e121af01c2e6', 0, 1, getdate(), getdate())
 
+
 -- --- ---
 
 select * from Memory where Name = 'tilley_navigation'
 
 select * from PromptMemories where PromptID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
+
+
 
