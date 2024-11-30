@@ -30,16 +30,17 @@ namespace TestHarness
             var embeddingCache = new RGCache();
             RG.Instance = new RG(embeddingCache);
 
-            Task.Run(async () =>
-            {
-                await TestInMemoryVectorStore();
-            }).Wait();
+
+            TestToolFunctionGroceryApi();
+
+            //Task.Run(async () =>
+            //{
+            //    await TestInMemoryVectorStore();
+            //}).Wait();
 
             //TestChatCompletion();
 
             //TestToolFunction();
-
-            //TestToolFunctionGrocery();
 
             //TestTilleyNavigation();
 
@@ -303,7 +304,7 @@ Code only.";
                     TenantID = tenantID,
                     SessionID = sessionID,
                     AccessKey = accessKey,
-                    PromptName = "instore_experience_helper",
+                    //PromptName = "instore_experience_helper",
                     RequestMessageContent = "Do you have large ice cream?",
                     //Persona = "chef_female",
                     LanguageCode = "es"

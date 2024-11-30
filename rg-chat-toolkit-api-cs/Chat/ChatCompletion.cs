@@ -1,6 +1,7 @@
 ﻿using Amazon.Polly;
 using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
+using rg_chat_toolkit_api_cs.Chat.Helpers;
 using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
@@ -92,6 +93,21 @@ public class ChatCompletionController : ControllerBase
         // timer
         var timer = new Stopwatch();
         timer.Start();
+
+        if (request.PromptName == null)
+        {
+            // Select most likely prompt:
+            var prompts = await PromptCache.GetOrCreatePromptVectorStore(request.TenantID);
+            var embedding = await PromptCache.GetEmbedding(request.RequestMessageContent);
+            if (embedding != null && prompts != null)
+            {
+                var promptSearchResult = prompts.Search(embedding, 3);
+                if (promptSearchResult.Length > 0)
+                {
+                    request.PromptName = promptSearchResult[0].Item.Key;
+                }
+            }
+        }
 
         if (request.PromptName == null)
         {
