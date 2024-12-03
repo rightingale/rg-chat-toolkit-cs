@@ -25,4 +25,8 @@
     <ProjectReference Include="..\rg-chat-toolkit-cs\rg-chat-toolkit-cs.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Prompt\" />
+  </ItemGroup>
+
 </Project>

@@ -39,13 +39,11 @@ public partial class RgToolkitContext : DbContext
 
     public virtual DbSet<PromptTool> PromptTools { get; set; }
 
+    public virtual DbSet<PromptUtterance> PromptUtterances { get; set; }
+
     public virtual DbSet<Tenant> Tenants { get; set; }
 
     public virtual DbSet<Tool> Tools { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=db.TEST.datanac.io;Database=RG-Toolkit;User ID=admin;Password=predictiveAnalyticsEmpowersTheFarm;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -152,9 +150,7 @@ public partial class RgToolkitContext : DbContext
             entity.Property(e => e.LastUpdate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.MemoryType)
-                .HasMaxLength(20)
-                .IsUnicode(false);
+            entity.Property(e => e.MemoryType).HasMaxLength(500);
             entity.Property(e => e.Name).HasMaxLength(100);
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.Memories)
@@ -250,6 +246,7 @@ public partial class RgToolkitContext : DbContext
             entity.Property(e => e.CreateDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.LastUpdate)
                 .HasDefaultValueSql("(getdate())")
@@ -440,6 +437,33 @@ public partial class RgToolkitContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.PromptId).HasColumnName("PromptID");
             entity.Property(e => e.ToolId).HasColumnName("ToolID");
+        });
+
+        modelBuilder.Entity<PromptUtterance>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.PromptId, e.Id });
+
+            entity.HasIndex(e => new { e.TenantId, e.PromptId, e.Id }, "IX_PromptUtterances_ID").IsUnique();
+
+            entity.HasIndex(e => new { e.TenantId, e.Utterance }, "IX_PromptUtterances_Utterance").IsUnique();
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.PromptId).HasColumnName("PromptID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Utterance).HasMaxLength(200);
+
+            entity.HasOne(d => d.Prompt).WithMany(p => p.PromptUtterances)
+                .HasForeignKey(d => new { d.TenantId, d.PromptId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptUtterances_PromptID");
         });
 
         modelBuilder.Entity<Tenant>(entity =>

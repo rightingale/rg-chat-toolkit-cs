@@ -55,6 +55,14 @@ public class InMemoryVectorStoreMemory : MemoryBase
     }
 
     // ---
+    public override async Task Add (string key, string value)
+    {
+        var embedding = await this.EMBEDDING.GetEmbedding(value);
+        if (embedding != null)
+        {
+            this.vectorStore.Add(key, value, embedding);
+        }
+    }
 
     public override async Task<Message?> Search(string text)
     {

@@ -23,6 +23,8 @@ public partial class Prompt
 
     public DateTime LastUpdate { get; set; }
 
+    public string Description { get; set; } = null!;
+
     public virtual ICollection<PromptFilter> PromptFilters { get; set; } = new List<PromptFilter>();
 
     public virtual ICollection<PromptMemory> PromptMemories { get; set; } = new List<PromptMemory>();
@@ -30,6 +32,8 @@ public partial class Prompt
     public virtual ICollection<PromptObject> PromptObjects { get; set; } = new List<PromptObject>();
 
     public virtual ICollection<PromptPersona> PromptPersonas { get; set; } = new List<PromptPersona>();
+
+    public virtual ICollection<PromptUtterance> PromptUtterances { get; set; } = new List<PromptUtterance>();
 
     public virtual ContentType ReponseContentTypeNameNavigation { get; set; } = null!;
 

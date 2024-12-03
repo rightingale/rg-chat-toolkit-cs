@@ -94,22 +94,13 @@ public class ChatCompletionController : ControllerBase
         var timer = new Stopwatch();
         timer.Start();
 
+        string? chosenPromptName = request.PromptName;
         if (request.PromptName == null)
         {
-            // Select most likely prompt:
-            var prompts = await PromptCache.GetOrCreatePromptVectorStore(request.TenantID);
-            var embedding = await PromptCache.GetEmbedding(request.RequestMessageContent);
-            if (embedding != null && prompts != null)
-            {
-                var promptSearchResult = prompts.Search(embedding, 3);
-                if (promptSearchResult.Length > 0)
-                {
-                    request.PromptName = promptSearchResult[0].Item.Key;
-                }
-            }
+            chosenPromptName = await PromptChooser.ChoosePrompt(request.TenantID, request.RequestMessageContent ?? "");
         }
 
-        if (request.PromptName == null)
+        if (chosenPromptName == null)
         {
             throw new ApplicationException("Prompt name is required.");
         }
@@ -131,19 +122,28 @@ public class ChatCompletionController : ControllerBase
         }
 
         // Lookup the prompt:
-        var prompt = DataMethods.Prompt_Get(request.TenantID, request.PromptName);
+        var prompt = DataMethods.Prompt_Get(request.TenantID, chosenPromptName);
 
         if (prompt?.SystemPrompt != null)
         {
             if (request.DoStreamResponse)
             {
-                if (prompt.DoStreamResponse == false) throw new ApplicationException("Prompt does not support streaming.");
-
-                var allowStreamResponse = prompt.ReponseContentTypeNameNavigation.AllowStreamResponse;
-                if (allowStreamResponse == false)
+                if (prompt.DoStreamResponse == false && request.PromptName != null) throw new ApplicationException("Prompt does not support streaming.");
+                if (request.PromptName == null &&
+                    (prompt.DoStreamResponse == false || prompt.ReponseContentTypeNameNavigation.AllowStreamResponse == false))
                 {
-                    // Format Content type XXXX does not support streaming.
-                    throw new ApplicationException($"Content type {prompt.ReponseContentTypeNameNavigation.Name} does not support streaming.");
+                    // Auto-chosen prompt, we can allow override:
+                    request.DoStreamResponse = false;
+                }
+
+                if (request.DoStreamResponse)
+                {
+                    var allowStreamResponse = prompt.ReponseContentTypeNameNavigation.AllowStreamResponse;
+                    if (allowStreamResponse == false)
+                    {
+                        // Format Content type XXXX does not support streaming.
+                        throw new ApplicationException($"Content type {prompt.ReponseContentTypeNameNavigation.Name} does not support streaming.");
+                    }
                 }
             }
 

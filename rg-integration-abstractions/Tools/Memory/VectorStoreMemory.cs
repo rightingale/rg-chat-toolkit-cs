@@ -31,6 +31,11 @@ public abstract class VectorStoreMemory : MemoryBase
 
     // ---
 
+    public override async Task Add (string key, string value)
+    {
+        throw new NotImplementedException();
+    }
+
     public override async Task<Message?> Search(string text)
     {
 #if DEBUG
