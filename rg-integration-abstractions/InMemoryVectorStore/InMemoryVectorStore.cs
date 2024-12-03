@@ -27,6 +27,7 @@ public class InMemoryVectorStore
 
     public class KeyValueItem
     {
+        public readonly Guid ID = Guid.NewGuid();
         public string Key { get; set; }
         public string Value { get; set; }
         public float[] ValueEmbedding { get; set; }
@@ -44,6 +45,7 @@ public class InMemoryVectorStore
         foreach (var currentSearchItem in this.vectorStore)
         {
             var distance = CosineSimilarity(query, currentSearchItem.ValueEmbedding);
+            //var distance = EuclidianDistance(query, currentSearchItem.ValueEmbedding);
             comparison.Add(new SearchResponse { Item = currentSearchItem, Distance = distance });
         }
 
@@ -62,6 +64,16 @@ public class InMemoryVectorStore
         double magnitudeA = Math.Sqrt(vectorA.Sum(a => a * a));
         double magnitudeB = Math.Sqrt(vectorB.Sum(b => b * b));
         return dotProduct / (magnitudeA * magnitudeB);
+    }
+
+    static double EuclidianDistance(float[] vectorA, float[] vectorB)
+    {
+        double sum = 0;
+        for (int i = 0; i < vectorA.Length; i++)
+        {
+            sum += Math.Pow(vectorA[i] - vectorB[i], 2);
+        }
+        return Math.Sqrt(sum);
     }
 
 }
