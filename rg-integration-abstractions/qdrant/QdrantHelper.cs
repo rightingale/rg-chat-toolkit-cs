@@ -84,4 +84,24 @@ public class QdrantHelper
 
         return stringBuilder.ToString();
     }
+
+    public async Task Upsert(string key, string value, Dictionary<string, object> attributes)
+    {
+        HttpClient httpClient = new();
+        httpClient.DefaultRequestHeaders.Add("api-key", this.qdrantApiKey);
+        var qdrant = new QdrantVectorDbClient(httpClient, embeddingModel.EmbeddingSize, this.qdrantEndpoint);
+
+        var embedding = await this.embeddingModel.GetEmbedding(value);
+        var record = new QdrantVectorRecord[]
+        {
+            new QdrantVectorRecord(
+                key/*point id*/,
+                embedding,
+                attributes
+            )
+        };
+        await qdrant.UpsertVectorsAsync("memory", record);
+
+        Console.WriteLine("Wrote id: " + key);
+    }
 }

@@ -15,8 +15,8 @@ public static partial class DataMethods
 
     //public static readonly Guid PRODUCER_TOKEN_SYSTEM = Guid.Parse("00000000-0000-0000-0000-000000000000");
 
-    public static readonly TimeSpan SLIDING_EXPIRATION = TimeSpan.FromMinutes(15);
-    public static readonly TimeSpan ABSOLUTE_EXPIRATION = TimeSpan.FromHours(8);
+    public static readonly TimeSpan SLIDING_EXPIRATION = TimeSpan.FromHours(8);
+    public static readonly TimeSpan ABSOLUTE_EXPIRATION = TimeSpan.FromDays(1);
 
     private static MemoryCache cache = new MemoryCache(new MemoryCacheOptions()
     {

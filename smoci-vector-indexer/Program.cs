@@ -211,9 +211,6 @@ namespace weather_vector_indexer
             );
             var logger = loggerFactory.CreateLogger(nameof(Program));
 
-
-            List<Task> tasks = new();
-
             // Persist vectors:
             HttpClient httpClient = new();
             var qdrantApiKey = config["qdrant-apikey"];

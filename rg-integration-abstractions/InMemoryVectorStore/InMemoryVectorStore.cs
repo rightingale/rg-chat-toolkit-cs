@@ -19,7 +19,7 @@ public class InMemoryVectorStore
         vectorStore.Add(item);
     }
 
-    public void Add (string key, string value, float[] vector)
+    public void Add (string key, string value, string content, float[] vector)
     {
         var keyValueItem = new KeyValueItem { Key = key, Value = value, ValueEmbedding = vector };
         vectorStore.Add(keyValueItem);

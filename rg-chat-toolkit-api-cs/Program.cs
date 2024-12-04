@@ -1,4 +1,5 @@
 
+using Microsoft.Extensions.DependencyInjection;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;

@@ -16,7 +16,7 @@ public abstract class MemoryBase : ToolBase
     protected abstract int TopN { get; }
     public bool DoPreload { get; set; } = false;
 
-    public abstract Task Add(string key, string value);
+    public abstract Task Add(string key, string value, string content);
 
     public abstract Task<Message?> Search(string text);
 

@@ -46,7 +46,7 @@ public static partial class DataMethods
             var embeddingValue = await RG.Instance.EmbeddingModel.GetEmbedding(currentPrompt.Description);
             if (embeddingValue != null)
             {
-                vectorStore.Add(currentPrompt.Name, currentPrompt.Description, embeddingValue);
+                vectorStore.Add(currentPrompt.Name, currentPrompt.Description, "", embeddingValue);
             }
 
             foreach (var currentUtterance in currentPrompt.PromptUtterances)
@@ -54,7 +54,7 @@ public static partial class DataMethods
                 embeddingValue = await RG.Instance.EmbeddingModel.GetEmbedding(currentUtterance.Utterance);
                 if (embeddingValue != null)
                 {
-                    vectorStore.Add(currentPrompt.Name, currentUtterance.Utterance, embeddingValue);
+                    vectorStore.Add(currentPrompt.Name, currentUtterance.Utterance, "", embeddingValue);
                 }
             }
         }

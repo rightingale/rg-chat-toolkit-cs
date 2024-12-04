@@ -54,7 +54,8 @@ namespace TestHarness
 
             Task.Run(async () =>
             {
-                await Test_PromptChooser();
+                await Test_MemoryUpdate();
+                //await Test_PromptChooser();
                 //await TestInMemoryVectorStore_Server();
                 //await TestInMemoryVectorStore();
             }).Wait();
@@ -88,6 +89,19 @@ namespace TestHarness
             //TestClaude();
 
             //TestWebScraper();
+        }
+
+        public static async Task Test_MemoryUpdate()
+        {
+            MemoryController ws = new MemoryController(RG.Instance.EmbeddingCache);
+            await ws.MemoryItemUpdate(new MemoryItemUpdateRequest()
+            {
+                TenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"),
+                MemoryItemID = Guid.NewGuid().ToString(),
+                MemoryName = "tilley_navigation",
+                Value = "Test",
+                Json = "{\"test\": \"test value\"}"
+            });
         }
 
         public static async Task Test_PromptChooser()

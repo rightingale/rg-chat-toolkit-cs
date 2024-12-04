@@ -55,12 +55,12 @@ public class InMemoryVectorStoreMemory : MemoryBase
     }
 
     // ---
-    public override async Task Add (string key, string value)
+    public override async Task Add (string key, string value, string content)
     {
         var embedding = await this.EMBEDDING.GetEmbedding(value);
         if (embedding != null)
         {
-            this.vectorStore.Add(key, value, embedding);
+            this.vectorStore.Add(key, value, content, embedding);
         }
     }
 
