@@ -81,5 +81,6 @@ public class RGCache
 
         //var hashCode = String.Intern(text).GetHashCode();
         return $"rg-embedding-{text}";
+        //return $"rg-embedding-{String.Intern(text).GetHashCode()}";
     }
 }

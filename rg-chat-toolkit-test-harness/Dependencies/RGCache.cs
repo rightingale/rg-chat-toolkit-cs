@@ -25,10 +25,14 @@ internal class RGCache : IRGEmbeddingCache
             return Task.FromResult<string>(null);
         }
     }
-
     public string GetEmbeddingCacheKey(string text)
     {
-        return $"rg-embedding-{text.GetHashCode()}-{text}";
+        //return $"rg-embedding-{text.GetHashCode()}";
+        //return $"rg-embedding-{text}";
+
+        //var hashCode = String.Intern(text).GetHashCode();
+        return $"rg-embedding-{text}";
+        //return $"rg-embedding-{String.Intern(text).GetHashCode()}";
     }
 
     public Task<bool> Put(string key, string value)

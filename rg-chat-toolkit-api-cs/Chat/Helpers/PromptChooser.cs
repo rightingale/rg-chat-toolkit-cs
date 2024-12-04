@@ -14,23 +14,33 @@ public static class PromptChooser
         var searchResponse = memoryStore.Search(searchEmbedding, 10);
 
         //// Get the first bigram, splitting on word boundaries:
-        //var searchQueryHalf = searchQuery.Split(" ").Take(2).Aggregate((a, b) => a + " " + b);
-        //var searchEmbeddingHalf = await RG.Instance.EmbeddingModel.GetEmbedding(searchQueryHalf);
-        //var searchResponseHalf = memoryStore.Search(searchEmbeddingHalf, 10);
+        var searchQueryHalf = searchQuery.Split(" ").Take(2).Aggregate((a, b) => a + " " + b);
+        var searchEmbeddingHalf = await RG.Instance.EmbeddingModel.GetEmbedding(searchQueryHalf);
+        var searchResponseHalf = memoryStore.Search(searchEmbeddingHalf, 10);
 
-        //foreach (var currentResult in searchResponse)
-        //{
-        //    // Find the bigram distance and add:
-        //    var currentHalfResult = searchResponseHalf.Where(halfKey => halfKey.Item.ID == currentResult.Item.ID)
-        //        .SingleOrDefault();
+        foreach (var currentResult in searchResponse)
+        {
+            // Find the bigram distance and add:
+            var currentHalfResult = searchResponseHalf.Where(halfKey => halfKey.Item.ID == currentResult.Item.ID)
+                .SingleOrDefault();
 
-        //    Console.WriteLine("Combining " + currentResult.Item.Key + " and " + currentHalfResult.Item.Key + " for " + currentResult.Distance + " + " + currentHalfResult.Distance + " = " + (currentResult.Distance + currentHalfResult.Distance));
-        
-        //    if (currentHalfResult != null)
-        //    {
-        //        currentResult.Distance += currentHalfResult.Distance;
-        //    }
-        //}
+            // Half key for CURRENTRESULT is CURRENTHALFRESULT - output keys
+            Console.WriteLine("Combining: " + currentResult.Item.Key + "\t" + currentResult.Distance
+                + "\t" + currentHalfResult?.Distance);
+
+            var weightedDistance = currentResult.Distance * searchQuery.Length
+                    + (currentHalfResult?.Distance ?? 0) * searchQueryHalf.Length;
+            var weightedAvgDistance = weightedDistance / (searchQuery.Length + searchQueryHalf.Length);
+
+            currentResult.Distance = weightedAvgDistance;
+        }
+
+        // Sort desc by distance
+        searchResponse = searchResponse.OrderByDescending(x => x.Distance).ToArray();
+        foreach (var currentResult in searchResponse)
+        {
+            Console.WriteLine(currentResult.Item.Key + "\t" + currentResult.Distance + "\t" + currentResult.Item.Value.Substring(0, currentResult.Item.Value.Length > 20 ? 20 : currentResult.Item.Value.Length));
+        }
 
         //// Print all results
         //foreach (var currentResult in searchResponse.OrderByDescending(x => x.Distance))

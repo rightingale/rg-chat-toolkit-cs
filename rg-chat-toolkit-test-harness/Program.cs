@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using OpenAIApiExample;
 using rg_chat_toolkit_api_cs;
 using rg_chat_toolkit_api_cs.Chat;
+using rg_chat_toolkit_api_cs.Chat.Helpers;
 using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_api_cs.Speech;
 using rg_chat_toolkit_cs.Cache;
@@ -53,7 +54,8 @@ namespace TestHarness
 
             Task.Run(async () =>
             {
-                await TestInMemoryVectorStore_Server();
+                await Test_PromptChooser();
+                //await TestInMemoryVectorStore_Server();
                 //await TestInMemoryVectorStore();
             }).Wait();
 
@@ -88,10 +90,20 @@ namespace TestHarness
             //TestWebScraper();
         }
 
+        public static async Task Test_PromptChooser()
+        {
+            var searchQuery = "what is my total assets on balance sheet";
+            var prompt = await PromptChooser.ChoosePrompt(Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"), searchQuery);
+
+            Console.WriteLine("Search query: " + searchQuery);
+            Console.WriteLine("Prompt: " + prompt);
+        }
+
+
         public static async Task TestInMemoryVectorStore_Server()
         {
             var memoryStore = await DataMethods.Prompt_EnsureEmbedding(Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"));
-            var searchQuery = "What is my total assets";
+            var searchQuery = "show the page where I analyze my balance sheet and financials";
 
             // Get a 2-gram bigram, splitting on word boundaries:
             var searchQueryHalf = searchQuery.Split(" ").Take(2).Aggregate((a, b) => a + " " + b);
@@ -119,6 +131,12 @@ namespace TestHarness
                 Console.WriteLine("Combining: " + currentResult.Item.Key + "\t" + currentResult.Distance
                     + "\t" + currentHalfResult?.Distance);
                 //+ "\t" + currentThirdResult.Distance);
+
+                var weightedDistance = currentResult.Distance * searchQuery.Length
+                        + (currentHalfResult?.Distance ?? 0) * (currentHalfResult?.Item.Value.Length ?? 0);
+                var weightedAvgDistance = weightedDistance / (searchQuery.Length + (currentHalfResult?.Item.Value.Length ?? 0));
+
+                currentResult.Distance = weightedAvgDistance;
 
                 //if (currentHalfResult != null)
                 //{

@@ -56,13 +56,19 @@ insert into PromptUtterances (TenantID, PromptID, Utterance)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'go to')
 
 insert into PromptUtterances (TenantID, PromptID, Utterance)
-values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'take me to')
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'take me to a certain page')
 
 insert into PromptUtterances (TenantID, PromptID, Utterance)
-values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'navigate to')
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'navigate to a certain page')
 
 insert into PromptUtterances (TenantID, PromptID, Utterance)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'show me')
+
+insert into PromptUtterances (TenantID, PromptID, Utterance)
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'go to a certain page')
+
+insert into PromptUtterances (TenantID, PromptID, Utterance)
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'go to a certain page where I can perform a certain action')
 
 
 -- ---
