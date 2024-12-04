@@ -177,14 +177,12 @@ public class ChatCompletionController : ControllerBase
                 var responseString = string.Join(String.Empty, responseList);
 
                 // Save in cache: for related functions (e.g., SynthesizeSpeech).
+                var cacheResponse = new ChatCompletionResponse() { Request = request, Response = responseString };
                 var cacheKey = RGCache.Instance.GetMessageCacheKey(request.TenantID, request.SessionID, request.AccessKey);
-                //await RGCache.Instance.Put(cacheKey, responseString);
-
-                var cacheResponse = new ChatCompletionResponse()
+                if (prompt.ReponseContentTypeName != ChatCompletion.RESPONSE_FORMAT_TEXT)
                 {
-                    Request = request,
-                    Response = responseString
-                };
+                    cacheResponse.Response = "...";
+                }
                 await RGCache.Instance.PutResponse(cacheKey, cacheResponse);
 
                 timer.Stop();
