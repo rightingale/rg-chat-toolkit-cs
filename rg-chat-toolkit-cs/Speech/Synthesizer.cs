@@ -53,7 +53,7 @@ namespace rg_chat_toolkit_cs.Speech
                 engine = Engine.Neural;
             }
 
-            var client = new AmazonPollyClient(ConfigurationHelper.AWSAccessKeyId, ConfigurationHelper.AWSSecretAccessKey);
+            var client = new AmazonPollyClient(ConfigurationHelper.AWSAccessKeyId, ConfigurationHelper.AWSSecretAccessKey, RegionEndpoint.USEast1);
 
             var request = new SynthesizeSpeechRequest
             {
