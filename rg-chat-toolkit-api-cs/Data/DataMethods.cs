@@ -10,7 +10,7 @@ using rg_chat_toolkit_api_cs.Data.Models;
 
 namespace rg_chat_toolkit_api_cs.Data;
 
-public static class DataMethods
+public static partial class DataMethods
 {
 
     //public static readonly Guid PRODUCER_TOKEN_SYSTEM = Guid.Parse("00000000-0000-0000-0000-000000000000");

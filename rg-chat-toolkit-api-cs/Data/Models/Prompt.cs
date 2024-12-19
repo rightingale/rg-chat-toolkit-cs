@@ -27,6 +27,8 @@ public partial class Prompt
 
     public virtual ICollection<PromptObject> PromptObjects { get; set; } = new List<PromptObject>();
 
+    public virtual ICollection<PromptPersona> PromptPersonas { get; set; } = new List<PromptPersona>();
+
     public virtual ContentType ReponseContentTypeNameNavigation { get; set; } = null!;
 
     public virtual Tenant Tenant { get; set; } = null!;

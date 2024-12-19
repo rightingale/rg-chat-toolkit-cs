@@ -18,12 +18,16 @@ public class ChatCompletion
 {
     protected readonly IRGEmbeddingCache EmbeddingCache;
 
+    // Use reponse formats like HTTP content types
+    public const string RESPONSE_FORMAT_JSON = "application/json";
+    public const string RESPONSE_FORMAT_TEXT = "text/plain";
+
     public ChatCompletion(IRGEmbeddingCache embeddingCache)
     {
         this.EmbeddingCache = embeddingCache;
     }
 
-    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? languageCode)
+    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? voiceName, string? languageCode, string? responseFormat)
     {
         Dictionary<int, string> toolCallIdsByIndex = new();
         Dictionary<int, string> functionNamesByIndex = new();
@@ -39,9 +43,9 @@ public class ChatCompletion
         messagesList.AddRange(messages);
 
         // Language:
-        if (languageCode == Synthesizer.LANGUAGECODE_SPANISH)
+        if (languageCode?.ToLower()?.StartsWith(Synthesizer.LANGUAGECODE_SPANISH) == true)
         {
-            messagesList.Add(new Message(Message.ROLE_SYSTEM, "Reply in Spanish, ES-MX."));
+            messagesList.Add(new Message(Message.ROLE_SYSTEM, "Reply only in Spanish, ES-MX."));
         }
 
         // Tools:
@@ -79,6 +83,14 @@ public class ChatCompletion
         }
 
         var options = new ChatCompletionsOptions("gpt-4o", messagesList.ToArray()?.ToChatRequestMessages());
+        if (responseFormat == RESPONSE_FORMAT_JSON)
+        {
+            options.ResponseFormat = ChatCompletionsResponseFormat.JsonObject;
+        }
+        else if (responseFormat == RESPONSE_FORMAT_TEXT)
+        {
+            options.ResponseFormat = ChatCompletionsResponseFormat.Text;
+        }
         foreach (var tool in enabledTools)
         {
             options.Tools.Add(tool.GetToolDefinition());
@@ -144,7 +156,7 @@ public class ChatCompletion
                         newMessages.AddRange(messages);
                         newMessages.Add(new Message(role: Message.ROLE_SYSTEM, content: toolResponseMessage.Content));
                         ChatCompletion recursiveChatCompletion = new ChatCompletion(this.EmbeddingCache);
-                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, languageCode);
+                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, null, languageCode, responseFormat);
 
                         //// Add the TOOL request.
                         //var allMessages = handleAddMessage(toolRequestMessage);

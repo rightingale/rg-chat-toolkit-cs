@@ -1,0 +1,25 @@
+// List all collections
+GET collections
+
+// Get collection info
+GET collections/grocery-embeddings
+
+
+POST /collections/grocery-embeddings/points/query
+{
+      "with_payload": ["ItemName"],
+    "query": [-0.022038454,-0.02099321]
+}
+
+
+
+DELETE collections/grocery-embeddings
+
+
+PUT /collections/grocery-embeddings
+{
+    "vectors": {
+      "size": 3072,
+      "distance": "Cosine"
+    }
+}

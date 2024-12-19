@@ -51,7 +51,7 @@ public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
 
         if (String.IsNullOrEmpty(openaiApiKey) || String.IsNullOrEmpty(openaiEndpoint))
         {
-            throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint.");
+            throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
         }
         this.EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
 

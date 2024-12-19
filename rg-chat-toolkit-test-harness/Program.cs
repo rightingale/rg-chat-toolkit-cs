@@ -1,8 +1,11 @@
-﻿using Azure;
+﻿using Amazon.Polly.Model;
+using Azure;
 using Azure.AI.OpenAI;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using OpenAIApiExample;
 using rg_chat_toolkit_api_cs.Chat;
+using rg_chat_toolkit_api_cs.Speech;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
@@ -23,11 +26,17 @@ namespace TestHarness
             //TestToolFunction();
 
             //TestToolFunctionGrocery();
-            TestToolFunctionGroceryApi();
+
+            TestTilleyNavigation();
+
+            //TestToolFunctionGroceryApi();
+            //TestSpeechApi();
+
             //TestToolFunctionGroceryApi();
             //TestToolFunctionGroceryApi();
             //TestToolFunctionGroceryApi();
             //TestToolFunctionGroceryApi();
+            //TestSynthesizeSpeech();
 
             //// Run TestToolFunction 10 times:
             //for (int i = 0; i < 10; i++)
@@ -43,6 +52,37 @@ namespace TestHarness
             //TestClaude();
 
             //TestWebScraper();
+        }
+
+        public static void TestTilleyNavigation()
+        {
+            Guid tenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08");
+            Guid sessionID = Guid.Parse("00000000-0000-0000-0000-000000000000");
+            Guid accessKey = Guid.Parse("00000000-0000-0000-0000-000000000000");
+
+            Task.Run(async () =>
+            {
+                ChatCompletionController api = new(new RGCache());
+                var responseAsync = api.SendChatCompletion(new ChatCompletionRequest()
+                {
+                    TenantID = tenantID,
+                    SessionID = sessionID,
+                    AccessKey = accessKey,
+                    PromptName = "tilley_navigation",
+                    RequestMessageContent = "report all my farms",
+                    //Persona = "chef_female",
+                    //LanguageCode = "en"
+                });
+
+                StringBuilder stringBuilder = new StringBuilder();
+                // Await foreach to process each response as it arrives
+                await foreach (var str in responseAsync)
+                {
+                    stringBuilder.Append(str);
+                }
+
+                Console.WriteLine(stringBuilder.ToString());
+            }).Wait();
         }
 
         public static void TestClaude()
@@ -133,7 +173,7 @@ Code only.";
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
                 new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order. Consider only family surname. But count distinct people as separate entries. Group by letter. Finally, which letter has the most entries?"),
-                }, true/*allowTools*/, null);
+                }, true/*allowTools*/, null, null, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -168,7 +208,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
-                    true /*allowTools*/, null);
+                    true /*allowTools*/, null, null, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -193,7 +233,9 @@ Code only.";
                     SessionID = sessionID,
                     AccessKey = accessKey,
                     PromptName = "instore_experience_helper",
-                    RequestMessageContent = "Do you have large ice cream?"
+                    RequestMessageContent = "Do you have large ice cream?",
+                    //Persona = "chef_female",
+                    LanguageCode = "es"
                 });
 
                 StringBuilder stringBuilder = new StringBuilder();
@@ -205,6 +247,51 @@ Code only.";
 
                 Console.WriteLine(stringBuilder.ToString());
             }).Wait();
+        }
+
+        public static async void TestSpeechApi()
+        {
+            Guid tenantID = Guid.Parse("787923AB-0D9F-EF11-ACED-021FE1D77A3B");
+            Guid sessionID = Guid.Parse("00000000-0000-0000-0000-000000000000");
+            Guid accessKey = Guid.Parse("00000000-0000-0000-0000-000000000000");
+
+            try
+            {
+                Task.Run(async () =>
+                {
+                    SynthesizerController api = new();
+                    var speechResponseAsync = await api.SynthesizeSpeech(new rg_chat_toolkit_api_cs.Speech.SynthesizeSpeechRequest()
+                    {
+                        TenantID = tenantID,
+                        SessionID = sessionID,
+                        AccessKey = accessKey,
+                        DoStreamResponse = false
+                    });
+
+                    // Upcast to FileStreamResult
+                    FileStreamResult speechResponse = (FileStreamResult)speechResponseAsync;
+                    var responseStream = speechResponse.FileStream;
+
+                    // Stream bytes into "c:\temp\speech.mp3"
+                    using (var fileStream = System.IO.File.Create("c:\\temp\\speech.mp3"))
+                    {
+                        // Stream the results from speechResponse into fileStream
+                        await responseStream.CopyToAsync(fileStream);
+                    }
+
+                    System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "explorer.exe",
+                        UseShellExecute = false,
+                        Arguments = "c:\\temp\\speech.mp3"
+                    };
+                    System.Diagnostics.Process.Start(psi);
+                }).Wait();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         public static void TestToolFunctionGrocery()
@@ -222,7 +309,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
-                    true /*allowTools*/, null);
+                    true /*allowTools*/, null, null, null);
 
                 StringBuilder stringBuilder = new StringBuilder();
                 // Await foreach to process each response as it arrives
