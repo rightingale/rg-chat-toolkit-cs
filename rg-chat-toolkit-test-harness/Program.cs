@@ -2,17 +2,27 @@
 using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 using OpenAIApiExample;
+using rg_chat_toolkit_api_cs;
 using rg_chat_toolkit_api_cs.Chat;
+using rg_chat_toolkit_api_cs.Chat.Helpers;
+using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_api_cs.Speech;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
 using rg_chat_toolkit_test_harness;
+using rg_integration_abstractions.Embedding;
+using rg_integration_abstractions.InMemoryVector;
+using rg_integration_abstractions.Tools.Memory;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Text;
 
 namespace TestHarness
@@ -21,13 +31,40 @@ namespace TestHarness
     {
         static void Main(string[] args)
         {
+            var embeddingCache = new RGCache();
+
+
+            var config = new ConfigurationManager()
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+                .AddUserSecrets<InMemoryVectorStoreMemory>()
+                .AddEnvironmentVariables()
+                .Build();
+            var openaiApiKey = config["openai-apikey"];
+            var openaiEndpoint = config["openai-endpoint-embeddings"];
+            if (String.IsNullOrEmpty(openaiApiKey) || String.IsNullOrEmpty(openaiEndpoint))
+            {
+                throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
+            }
+            var EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
+
+            RG.Instance = new RG(embeddingCache, EMBEDDING);
+
+
+            //TestToolFunctionGroceryApi();
+
+            Task.Run(async () =>
+            {
+                await Test_MemoryUpdate();
+                //await Test_PromptChooser();
+                //await TestInMemoryVectorStore_Server();
+                //await TestInMemoryVectorStore();
+            }).Wait();
+
             //TestChatCompletion();
 
             //TestToolFunction();
 
-            //TestToolFunctionGrocery();
-
-            TestTilleyNavigation();
+            //TestTilleyNavigation();
 
             //TestToolFunctionGroceryApi();
             //TestSpeechApi();
@@ -54,6 +91,151 @@ namespace TestHarness
             //TestWebScraper();
         }
 
+        public static async Task Test_MemoryUpdate()
+        {
+            MemoryController ws = new MemoryController(RG.Instance.EmbeddingCache);
+            await ws.MemoryItemUpdate(new MemoryItemUpdateRequest()
+            {
+                TenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"),
+                MemoryItemID = Guid.NewGuid().ToString(),
+                MemoryName = "tilley_navigation",
+                Value = "Test",
+                Json = "{\"test\": \"test value\"}"
+            });
+        }
+
+        public static async Task Test_PromptChooser()
+        {
+            var searchQuery = "what is my total assets on balance sheet";
+            var prompt = await PromptChooser.ChoosePrompt(Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"), searchQuery);
+
+            Console.WriteLine("Search query: " + searchQuery);
+            Console.WriteLine("Prompt: " + prompt);
+        }
+
+
+        public static async Task TestInMemoryVectorStore_Server()
+        {
+            var memoryStore = await DataMethods.Prompt_EnsureEmbedding(Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"));
+            var searchQuery = "show the page where I analyze my balance sheet and financials";
+
+            // Get a 2-gram bigram, splitting on word boundaries:
+            var searchQueryHalf = searchQuery.Split(" ").Take(2).Aggregate((a, b) => a + " " + b);
+            //// Get a 3-gram
+            //var searchQueryThird = searchQuery.Split(" ").Take(3).Aggregate((a, b) => a + " " + b);
+
+            var searchEmbedding = await RG.Instance.EmbeddingModel.GetEmbedding(searchQuery);
+            var searchEmbeddingHalf = await RG.Instance.EmbeddingModel.GetEmbedding(searchQueryHalf);
+            //var searchEmbeddingThird = await RG.Instance.EmbeddingModel.GetEmbedding(searchQueryThird);
+
+            var searchResponse = memoryStore.Search(searchEmbedding, 10);
+            var searchResponseHalf = memoryStore.Search(searchEmbeddingHalf, 10);
+            //var searchResponseThird = memoryStore.Search(searchEmbeddingThird, 10);
+
+            Console.WriteLine("Search results:");
+            foreach (var currentResult in searchResponse)
+            {
+                // Find the "half string" distance and add:
+                var currentHalfResult = searchResponseHalf.Where(halfKey => halfKey.Item.ID == currentResult.Item.ID)
+                    .SingleOrDefault();
+                //var currentThirdResult = searchResponseThird.Where(thirdKey => currentResult.Item.Key.Contains(thirdKey.Item.Key))
+                //    .SingleOrDefault();
+
+                // Half key for CURRENTRESULT is CURRENTHALFRESULT - output keys
+                Console.WriteLine("Combining: " + currentResult.Item.Key + "\t" + currentResult.Distance
+                    + "\t" + currentHalfResult?.Distance);
+                //+ "\t" + currentThirdResult.Distance);
+
+                var weightedDistance = currentResult.Distance * searchQuery.Length
+                        + (currentHalfResult?.Distance ?? 0) * (currentHalfResult?.Item.Value.Length ?? 0);
+                var weightedAvgDistance = weightedDistance / (searchQuery.Length + (currentHalfResult?.Item.Value.Length ?? 0));
+
+                currentResult.Distance = weightedAvgDistance;
+
+                //if (currentHalfResult != null)
+                //{
+                //    currentResult.Distance += currentHalfResult.Distance;
+                //    //+ currentThirdResult.Distance;
+                //}
+            }
+
+            // Sort desc by distance
+            searchResponse = searchResponse.OrderByDescending(x => x.Distance).ToArray();
+            foreach (var currentResult in searchResponse)
+            {
+                Console.WriteLine(currentResult.Item.Key + "\t" + currentResult.Distance + "\t" + currentResult.Item.Value.Substring(0, currentResult.Item.Value.Length > 20 ? 20 : currentResult.Item.Value.Length));
+            }
+
+            // Take top 1 by distance desc
+            var topResult = searchResponse.OrderByDescending(x => x.Distance).Take(1).SingleOrDefault();
+            string? promptName = null;
+            if (topResult != null)
+            {
+                promptName = topResult.Item.Key;
+            }
+
+            Console.WriteLine("Top result: " + promptName);
+        }
+
+        public static async Task TestInMemoryVectorStore()
+        {
+            var embeddingCache = RG.Instance.EmbeddingCache;
+
+            var config = new ConfigurationManager()
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+                .AddUserSecrets<InMemoryVectorStoreMemory>()
+                .AddEnvironmentVariables()
+                .Build();
+
+            var openaiApiKey = config["openai-apikey"];
+            var openaiEndpoint = config["openai-endpoint-embeddings"];
+            if (String.IsNullOrEmpty(openaiApiKey) || String.IsNullOrEmpty(openaiEndpoint))
+            {
+                throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
+            }
+            var EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
+
+            var memoryItems = new List<InMemoryVectorStore.KeyValueItem>();
+            memoryItems.Add(new InMemoryVectorStore.KeyValueItem()
+            {
+                Key = "financials_answers",
+                Value = "Analyze or report on data including Balance Sheet, Income Statement, Schedule F tax form.",
+                ValueEmbedding = []
+            });
+            memoryItems.Add(new InMemoryVectorStore.KeyValueItem()
+            {
+                Key = "tilley_navigation",
+                Value = "Navigate: 'Go To' or 'Show Me' a section including Farm Vault, Budget, ARC/PLC, Financials, Insurance, Marketing.",
+                ValueEmbedding = []
+            });
+            memoryItems.Add(new InMemoryVectorStore.KeyValueItem()
+            {
+                Key = "logout",
+                Value = "Quit: 'Exit' or 'Close' the application.",
+                ValueEmbedding = []
+            });
+
+            InMemoryVectorStore vectorStore = new InMemoryVectorStore();
+            foreach (var memoryItem in memoryItems)
+            {
+                memoryItem.ValueEmbedding = await EMBEDDING.GetEmbedding(memoryItem.Value);
+                // Output JSON of the embedding
+                Console.WriteLine("Embedding: " + JsonConvert.SerializeObject(memoryItem.ValueEmbedding).Length);
+                vectorStore.Add(memoryItem);
+            }
+
+            // Find match:
+            string searchQuery = "what is my total long term assets";
+            var searchEmbedding = await EMBEDDING.GetEmbedding(searchQuery);
+            var searchResponse = vectorStore.Search(searchEmbedding, 10);
+
+            Console.WriteLine("Search results:");
+            foreach (var currentResult in searchResponse)
+            {
+                Console.WriteLine(currentResult.Item.Key + "\t" + currentResult.Distance);
+            }
+        }
+
         public static void TestTilleyNavigation()
         {
             Guid tenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08");
@@ -69,7 +251,7 @@ namespace TestHarness
                     SessionID = sessionID,
                     AccessKey = accessKey,
                     PromptName = "tilley_navigation",
-                    RequestMessageContent = "report all my farms",
+                    RequestMessageContent = "customer support email",
                     //Persona = "chef_female",
                     //LanguageCode = "en"
                 });
@@ -173,7 +355,7 @@ Code only.";
                 new Message("system", "Respond in ES-419."),
                 new Message("assistant", "How can I help?"),
                 new Message("user", "Please make a single combined list of presidents of both US and Argentina in alphabetical order. Consider only family surname. But count distinct people as separate entries. Group by letter. Finally, which letter has the most entries?"),
-                }, true/*allowTools*/, null, null, null);
+                }, true/*allowTools*/, null, null, null, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -208,7 +390,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
-                    true /*allowTools*/, null, null, null);
+                    true /*allowTools*/, null, null, null, null);
 
                 // Await foreach to process each response as it arrives
                 await foreach (var str in response)
@@ -232,7 +414,7 @@ Code only.";
                     TenantID = tenantID,
                     SessionID = sessionID,
                     AccessKey = accessKey,
-                    PromptName = "instore_experience_helper",
+                    //PromptName = "instore_experience_helper",
                     RequestMessageContent = "Do you have large ice cream?",
                     //Persona = "chef_female",
                     LanguageCode = "es"
@@ -309,7 +491,7 @@ Code only.";
                 ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
-                    true /*allowTools*/, null, null, null);
+                    true /*allowTools*/, null, null, null, null);
 
                 StringBuilder stringBuilder = new StringBuilder();
                 // Await foreach to process each response as it arrives

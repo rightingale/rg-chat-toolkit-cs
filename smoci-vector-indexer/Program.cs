@@ -25,9 +25,6 @@ namespace weather_vector_indexer
 
         static void Main(string[] args)
         {
-            // Configure logger service to work with SK
-
-
             //PersistEmbeddingsForAllFiles();
             Search();
         }
@@ -214,9 +211,6 @@ namespace weather_vector_indexer
             );
             var logger = loggerFactory.CreateLogger(nameof(Program));
 
-
-            List<Task> tasks = new();
-
             // Persist vectors:
             HttpClient httpClient = new();
             var qdrantApiKey = config["qdrant-apikey"];
@@ -236,7 +230,9 @@ namespace weather_vector_indexer
                         ["object"] = item.Object ?? "",
                         ["category"] = item.Category ?? "",
                         ["item"] = item.Item ?? "",
-                        ["description"] = item.Description
+                        ["description"] = item.Description,
+
+                        ["json"] = JsonConvert.SerializeObject(item)
                     }
                 )
             };

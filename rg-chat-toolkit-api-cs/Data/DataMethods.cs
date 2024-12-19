@@ -15,8 +15,8 @@ public static partial class DataMethods
 
     //public static readonly Guid PRODUCER_TOKEN_SYSTEM = Guid.Parse("00000000-0000-0000-0000-000000000000");
 
-    public static readonly TimeSpan SLIDING_EXPIRATION = TimeSpan.FromMinutes(15);
-    public static readonly TimeSpan ABSOLUTE_EXPIRATION = TimeSpan.FromHours(8);
+    public static readonly TimeSpan SLIDING_EXPIRATION = TimeSpan.FromHours(8);
+    public static readonly TimeSpan ABSOLUTE_EXPIRATION = TimeSpan.FromDays(1);
 
     private static MemoryCache cache = new MemoryCache(new MemoryCacheOptions()
     {
@@ -49,11 +49,28 @@ public static partial class DataMethods
         var db = RGDatabaseContextFactory.Instance.CreateDbContext();
         var returnVal = db.Prompts
             .Include(p => p.ReponseContentTypeNameNavigation)
+            .Include(p => p.PromptMemories)
+            .ThenInclude(pm => pm.Memory)
             .Where(p =>
                 p.TenantId == tenantID
                 && p.Name == name
             )
             .FirstOrDefault();
+
+        return returnVal;
+    }
+
+    public static Prompt[]? Prompts_Select (Guid tenantID)
+    {
+        var db = RGDatabaseContextFactory.Instance.CreateDbContext();
+        var returnVal = db.Prompts
+            .Include(p => p.ReponseContentTypeNameNavigation)
+            .Include(p => p.PromptMemories)
+            .ThenInclude(pm => pm.Memory)
+            .Where(p =>
+                p.TenantId == tenantID
+            )
+            .ToArray();
 
         return returnVal;
     }

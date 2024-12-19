@@ -13,9 +13,9 @@ namespace rg_chat_toolkit_api_cs.Cache
     public class CacheService
     {
         public static readonly TimeSpan SLIDING_EXPIRATION = TimeSpan.FromMinutes(15);
-        public static readonly TimeSpan ABSOLUTE_EXPIRATION = TimeSpan.FromHours(1);
+        public static readonly TimeSpan ABSOLUTE_EXPIRATION = TimeSpan.FromDays(90);
         public static readonly TimeSpan VOLATILE_EXPIRATION = TimeSpan.FromSeconds(8);
-        public static readonly TimeSpan LOG_EXPIRATION = TimeSpan.FromDays(2);
+        public static readonly TimeSpan LOG_EXPIRATION = TimeSpan.FromDays(10);
 
         static readonly int SIZE_LIMIT = 2000;
 

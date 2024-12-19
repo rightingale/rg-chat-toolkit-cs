@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace rg_integration_abstractions.Tools.Memory;
@@ -17,7 +18,7 @@ public abstract class VectorStoreMemory : MemoryBase
 {
     IRGEmbeddingCache? embeddingCache;
 
-    protected VectorStoreMemory (IRGEmbeddingCache embeddingCache)
+    protected VectorStoreMemory(IRGEmbeddingCache embeddingCache)
     {
         this.embeddingCache = embeddingCache;
     }
@@ -30,6 +31,33 @@ public abstract class VectorStoreMemory : MemoryBase
 
 
     // ---
+
+    public override async Task Add(string key, string value, string content)
+    {
+        // Deserialize content into generic JSON object
+        var jsonNode = JsonObject.Parse(content);
+        Dictionary<string, object> attributes = new();
+        if (jsonNode is JsonObject objJson)
+        {
+            // add all props to dictionary
+            foreach (var prop in objJson)
+            {
+                if (prop.Value != null)
+                {
+                    attributes[prop.Key] = prop.Value;
+                }
+            }
+        }
+
+        if (content != null)
+        {
+            // add content as attribute
+            attributes["content"] = content;
+        }
+
+        var embedding = await this.EmbeddingModel.GetEmbedding(value);
+        await this.QdrantInstance.Upsert(key, value, attributes);
+    }
 
     public override async Task<Message?> Search(string text)
     {

@@ -1,3 +1,6 @@
 {"section": "tilley", "module": "vault", "object": null, "category": null, "item": null, "description": "Farm Vault: Create and Edit Farm, Tract, Field records including APH, Production History, Yields, Acreage, Base Acres."}
 {"section": "tilley", "module": "budget", "object": null, "category": null, "item": null, "description": "Farm Budget: Create and Edit Farm Budgets, including Revenue, Expenses."}
 {"section": "tilley", "module": "arc_plc", "object": null, "category": null, "item": null, "description": "Farm ARC/PLC: View ARC-County (ARC or ARC-CO) and PLC (Price Loss Coverage) information, including Base Acres, projected payments."}
+{"section": "tilley", "module": "information", "object": "address", "category": null, "item": null, "description": "Address, directions"}
+{"section": "tilley", "module": "information", "object": "phone_number", "category": null, "item": null, "description": "Phone number"}
+{"section": "tilley", "module": "information", "object": "email_address", "category": null, "item": null, "description": "Email address"}

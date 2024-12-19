@@ -77,11 +77,31 @@ public class QdrantHelper
 
             //Console.WriteLine(result.Item1.Payload["Text"] + "\t" + result.Item2);
 
-            var currentResult = result.Item1.Payload["Text"];
+            var currentResult = result.Item1.Payload["json"];
 
             stringBuilder.AppendLine(currentResult.ToString());
         }
 
         return stringBuilder.ToString();
+    }
+
+    public async Task Upsert(string key, string value, Dictionary<string, object> attributes)
+    {
+        HttpClient httpClient = new();
+        httpClient.DefaultRequestHeaders.Add("api-key", this.qdrantApiKey);
+        var qdrant = new QdrantVectorDbClient(httpClient, embeddingModel.EmbeddingSize, this.qdrantEndpoint);
+
+        var embedding = await this.embeddingModel.GetEmbedding(value);
+        var record = new QdrantVectorRecord[]
+        {
+            new QdrantVectorRecord(
+                key/*point id*/,
+                embedding,
+                attributes
+            )
+        };
+        await qdrant.UpsertVectorsAsync("memory", record);
+
+        Console.WriteLine("Wrote id: " + key);
     }
 }

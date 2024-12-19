@@ -19,6 +19,8 @@ public partial class Tenant
 
     public virtual ICollection<Filter> Filters { get; set; } = new List<Filter>();
 
+    public virtual ICollection<Memory> Memories { get; set; } = new List<Memory>();
+
     public virtual ICollection<Object> Objects { get; set; } = new List<Object>();
 
     public virtual ICollection<PromptFilter> PromptFilters { get; set; } = new List<PromptFilter>();

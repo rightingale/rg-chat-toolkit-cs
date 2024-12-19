@@ -26,7 +26,7 @@ public class RGCache
 
         RGCache.Cache = new RedisCacheService(
             expiration: CacheService.ABSOLUTE_EXPIRATION,
-            prefix: "rg-",
+            prefix: "rg",
             redisHost: redisHost,
             redisPort: redisPort,
             redisDatabase: redisDatabase,
@@ -76,6 +76,11 @@ public class RGCache
 
     public string GetEmbeddingCacheKey(string text)
     {
-        return $"rg-embedding-{text.GetHashCode()}";
+        //return $"rg-embedding-{text.GetHashCode()}";
+        //return $"rg-embedding-{text}";
+
+        //var hashCode = String.Intern(text).GetHashCode();
+        return $"rg-embedding-{text}";
+        //return $"rg-embedding-{String.Intern(text).GetHashCode()}";
     }
 }

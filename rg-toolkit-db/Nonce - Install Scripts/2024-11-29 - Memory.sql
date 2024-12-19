@@ -9,7 +9,7 @@ create table Memory (
     Description nvarchar(max) null,
     DescriptionEmbedding nvarchar(max) null,
 
-    MemoryType varchar(20) not null,
+    MemoryType nvarchar(500) not null,
 
     [Is_Active] bit not null default 1,
     CreateDate datetime not null default getdate(),

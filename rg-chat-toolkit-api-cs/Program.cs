@@ -1,7 +1,9 @@
 
+using Microsoft.Extensions.DependencyInjection;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
+using rg_integration_abstractions.Embedding;
 
 namespace rg_chat_toolkit_api_cs
 {
@@ -20,11 +22,13 @@ namespace rg_chat_toolkit_api_cs
 
             // RG
             builder.Services.AddSingleton<IRGEmbeddingCache, RGCache>();
+            builder.Services.AddSingleton<EmbeddingBase, RGEmbedding>();
 
             var app = builder.Build();
 
             var embeddingCache = app.Services.GetRequiredService<IRGEmbeddingCache>();
-            RG.Instance = new RG(embeddingCache);
+            var embeddingModel = app.Services.GetRequiredService<EmbeddingBase>();
+            RG.Instance = new RG(embeddingCache, embeddingModel);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

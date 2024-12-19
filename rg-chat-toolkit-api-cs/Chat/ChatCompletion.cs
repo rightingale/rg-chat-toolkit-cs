@@ -1,10 +1,12 @@
 ﻿using Amazon.Polly;
 using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
+using rg_chat_toolkit_api_cs.Chat.Helpers;
 using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
+using rg_integration_abstractions.Tools.Memory;
 using System.Diagnostics;
 using System.Text;
 
@@ -92,7 +94,13 @@ public class ChatCompletionController : ControllerBase
         var timer = new Stopwatch();
         timer.Start();
 
+        string? chosenPromptName = request.PromptName;
         if (request.PromptName == null)
+        {
+            chosenPromptName = await PromptChooser.ChoosePrompt(request.TenantID, request.RequestMessageContent ?? "");
+        }
+
+        if (chosenPromptName == null)
         {
             throw new ApplicationException("Prompt name is required.");
         }
@@ -114,25 +122,42 @@ public class ChatCompletionController : ControllerBase
         }
 
         // Lookup the prompt:
-        var prompt = DataMethods.Prompt_Get(request.TenantID, request.PromptName);
+        var prompt = DataMethods.Prompt_Get(request.TenantID, chosenPromptName);
 
         if (prompt?.SystemPrompt != null)
         {
             if (request.DoStreamResponse)
             {
-                if (prompt.DoStreamResponse == false) throw new ApplicationException("Prompt does not support streaming.");
-
-                var allowStreamResponse = prompt.ReponseContentTypeNameNavigation.AllowStreamResponse;
-                if (allowStreamResponse == false)
+                if (prompt.DoStreamResponse == false && request.PromptName != null) throw new ApplicationException("Prompt does not support streaming.");
+                if (request.PromptName == null &&
+                    (prompt.DoStreamResponse == false || prompt.ReponseContentTypeNameNavigation.AllowStreamResponse == false))
                 {
-                    // Format Content type XXXX does not support streaming.
-                    throw new ApplicationException($"Content type {prompt.ReponseContentTypeNameNavigation.Name} does not support streaming.");
+                    // Auto-chosen prompt, we can allow override:
+                    request.DoStreamResponse = false;
                 }
+
+                if (request.DoStreamResponse)
+                {
+                    var allowStreamResponse = prompt.ReponseContentTypeNameNavigation.AllowStreamResponse;
+                    if (allowStreamResponse == false)
+                    {
+                        // Format Content type XXXX does not support streaming.
+                        throw new ApplicationException($"Content type {prompt.ReponseContentTypeNameNavigation.Name} does not support streaming.");
+                    }
+                }
+            }
+
+            // Construct memories:
+            var memories = new List<MemoryBase>();
+            foreach (var promptMemory in prompt.PromptMemories.Where(mem => mem.Memory.IsActive))
+            {
+                var memory = MemoryBase.Create(promptMemory.Memory.Name, promptMemory.Memory.Description, promptMemory.Memory.MemoryType, RG.Instance.EmbeddingCache);
+                memories.Add(memory);
             }
 
             // Build the response:
             var response = RGChatInstance.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
-                                   true /*allowTools*/, null, request.LanguageCode, prompt.ReponseContentTypeName);
+                                   true /*allowTools*/, null, request.LanguageCode, prompt.ReponseContentTypeName, memories);
 
             if (request.DoStreamResponse)
             {
@@ -152,14 +177,12 @@ public class ChatCompletionController : ControllerBase
                 var responseString = string.Join(String.Empty, responseList);
 
                 // Save in cache: for related functions (e.g., SynthesizeSpeech).
+                var cacheResponse = new ChatCompletionResponse() { Request = request, Response = responseString };
                 var cacheKey = RGCache.Instance.GetMessageCacheKey(request.TenantID, request.SessionID, request.AccessKey);
-                //await RGCache.Instance.Put(cacheKey, responseString);
-
-                var cacheResponse = new ChatCompletionResponse()
+                if (prompt.ReponseContentTypeName != ChatCompletion.RESPONSE_FORMAT_TEXT)
                 {
-                    Request = request,
-                    Response = responseString
-                };
+                    cacheResponse.Response = "...";
+                }
                 await RGCache.Instance.PutResponse(cacheKey, cacheResponse);
 
                 timer.Stop();
