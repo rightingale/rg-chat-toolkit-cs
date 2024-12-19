@@ -51,9 +51,11 @@ set SystemPrompt = @systemPrompt, ReponseContentTypeName = 'application/json'
 where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and ID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
 
 
+delete from PromptUtterances where PromptID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
+
 -- PromptUtterances (5)
 insert into PromptUtterances (TenantID, PromptID, Utterance)
-values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'go to')
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'go to the page')
 
 insert into PromptUtterances (TenantID, PromptID, Utterance)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'take me to a certain page')
@@ -62,7 +64,7 @@ insert into PromptUtterances (TenantID, PromptID, Utterance)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'navigate to a certain page')
 
 insert into PromptUtterances (TenantID, PromptID, Utterance)
-values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'show me')
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'show me a certain page')
 
 insert into PromptUtterances (TenantID, PromptID, Utterance)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'go to a certain page')
@@ -97,6 +99,39 @@ select * from Memory where Name = 'tilley_navigation'
 
 select * from PromptMemories where PromptID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
 
+select SystemPrompt
+from Prompt where ID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
+
+update Prompt set SystemPrompt = 'You are Tilley, a Farm Financial Management expert. You can only help me with the following: 
+- Navigating the site ("Go to..." or "Take me to...") 
+- Asking questions about the site ("What can I do here?" or "Help")
+
+Stay on topic. Do not allow off-topic questions. If you do not know the answer, you can say "I do not know" or "I am not sure". 
+
+Return results in JSON format using this schema: 
+{"section": "tilley", "module": "module name", "object": "object name", "container": "container", "item": "item name"}
+Off-topic requests shall return this value:
+{section: null, module: null, object: null, container: null, item: null} 
+
+JSON Rules: 
+- "section" is always "tilley". 
+- "module" is a required field (except NULL for off-topic requests). 
+- "container" is nullable. 
+- "item" is nullable. 
+- Do not wrap the json codes in JSON markers. 
+- Do not substitute conjecture for missing props. 
+- Use only the props provided in the MEMORY DATA.  
+
+Use the following MEMORY DATA to answer questions: 
+{section: "tilley", module: "vault", object: "Farm", container: null, item: null} 
+{section: "tilley", module: "arc_plc", object: "base_acreage", container: null, item: null} 
+{section: "tilley", module: "arc_plc", object: "projections", container: null, item: null} 
+{section: "tilley", module: "insurance", object: "coverage", container: null, item: null} 
+{section: "tilley", module: "insurance", object: "sco_arc_comparison", container: null, item: null} 
+{section: "tilley", module: "reports", object: "FarmTractFieldReport", container: null, item: null} 
+{section: "tilley", module: "reports", object: "AcresMapReport", container: null, item: null}
+' 
+where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and ID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
 
 
 -- --- --- ---
@@ -120,9 +155,11 @@ where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and ID = 'dc17ef0a-559f-
 
 -- --- ---
 
-update Prompt set Description = 'Navigate, go to, or show me modules including Farm Vault, Budget, ARC/PLC, Insurance, Financials, Marketing' where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and Name = 'tilley_navigation'
+update Prompt set Description = 'Navigate, go to, or show me modules including Farm Vault, Budget, ARC/PLC, Insurance, Financials, Marketing' 
+where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and Name = 'tilley_navigation'
 
-update Prompt set Description = 'Ask questions, analyze, or report on Financial Documents including Balance Sheet, Income Statement, Schedule F tax form.' where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and Name = 'financials_question'
+update Prompt set Description = 'Ask questions, analyze, or report on Financial Documents including Balance Sheet, Income Statement, Schedule F tax form.' 
+where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and Name = 'financials_question'
 
 
 
