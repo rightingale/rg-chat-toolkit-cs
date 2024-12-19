@@ -20,8 +20,6 @@ using rg_integration_abstractions.Embedding;
 using rg_integration_abstractions.InMemoryVector;
 using rg_integration_abstractions.Tools.Memory;
 using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 
@@ -54,8 +52,8 @@ namespace TestHarness
 
             Task.Run(async () =>
             {
-                await Test_MemoryUpdate();
-                //await Test_PromptChooser();
+                //await Test_MemoryUpdate();
+                await Test_PromptChooser();
                 //await TestInMemoryVectorStore_Server();
                 //await TestInMemoryVectorStore();
             }).Wait();
@@ -100,7 +98,7 @@ namespace TestHarness
                 MemoryItemID = Guid.NewGuid().ToString(),
                 MemoryName = "tilley_navigation",
                 Value = "Test",
-                Json = "{\"test\": \"test value\"}"
+                Json = "{\"producer_token\": \"test-test-test-testing-test\", \"county_name\":\"Lubbock\", \"reported_acreage\":\"1000\"}"
             });
         }
 
@@ -267,53 +265,53 @@ namespace TestHarness
             }).Wait();
         }
 
-        public static void TestClaude()
-        {
-            const string USER_PROMPT_IDENTIFIER = @"You are a customer service agent at a pharmacy.
-Identify the medicine in the photo: color, shape, imprint
-Enable search capabilities.  Include search link: ""https://www.drugs.com/imprints.php?imprint=L015&color=12&shape=24""
-Substitute correct imprint, color, and shape querystring parameters, according to drugs.com pill identification API documentation.
-Reply only in JSON: 
-{ color: ""white"", imprint: ""X555.3"", shape: ""square"", search_url: ""https://www.drugs.com/imprints.php?imprint=XXX34&color=99&shape=99"" }
-Code only.";
+//        public static void TestClaude()
+//        {
+//            const string USER_PROMPT_IDENTIFIER = @"You are a customer service agent at a pharmacy.
+//Identify the medicine in the photo: color, shape, imprint
+//Enable search capabilities.  Include search link: ""https://www.drugs.com/imprints.php?imprint=L015&color=12&shape=24""
+//Substitute correct imprint, color, and shape querystring parameters, according to drugs.com pill identification API documentation.
+//Reply only in JSON: 
+//{ color: ""white"", imprint: ""X555.3"", shape: ""square"", search_url: ""https://www.drugs.com/imprints.php?imprint=XXX34&color=99&shape=99"" }
+//Code only.";
 
-            Task.Run(async () =>
-            {
-                await ClaudeChatCompletion.ChatCompletion(Resources_Extensions.L484_Bytes, USER_PROMPT_IDENTIFIER);
-            }).Wait();
-        }
+//            Task.Run(async () =>
+//            {
+//                await ClaudeChatCompletion.ChatCompletion(Resources_Extensions.L484_Bytes, USER_PROMPT_IDENTIFIER);
+//            }).Wait();
+//        }
 
-        public static void TestMedia()
-        {
-            Guid sessionID = Guid.NewGuid();
+        //public static void TestMedia()
+        //{
+        //    Guid sessionID = Guid.NewGuid();
 
-            Task.Run(async () =>
-            {
-                // Get base64 of image from Resources
-                string base64Image = Convert.ToBase64String(Resources_Extensions.L484_Bytes);
-                var response = ImageChatCompletion.ExplainImage(sessionID, base64Image);
+        //    Task.Run(async () =>
+        //    {
+        //        // Get base64 of image from Resources
+        //        string base64Image = Convert.ToBase64String(Resources_Extensions.L484_Bytes);
+        //        var response = ImageChatCompletion.ExplainImage(sessionID, base64Image);
 
-                // Await foreach to process each response as it arrives
-                await foreach (var str in response)
-                {
-                    Console.Write(str);
-                }
-            }).Wait();
-        }
+        //        // Await foreach to process each response as it arrives
+        //        await foreach (var str in response)
+        //        {
+        //            Console.Write(str);
+        //        }
+        //    }).Wait();
+        //}
 
-        public static void TestMedia_AWS()
-        {
-            // Get base64 of image from Resources
-            string base64Image = Convert.ToBase64String(Resources_Extensions.L484_Bytes);
+        //public static void TestMedia_AWS()
+        //{
+        //    // Get base64 of image from Resources
+        //    string base64Image = Convert.ToBase64String(Resources_Extensions.L484_Bytes);
 
-            Task.Run(async () =>
-            {
-                var imageAnalysisService = new ImageAnalysisService();
-                var result = await imageAnalysisService.AnalyzeImage(base64Image);
-                Console.WriteLine("Labels:" + string.Join(", ", result.labels.Select(l => l.Name)));
-                Console.WriteLine("Text:" + string.Join(", ", result.textDetections.Select(t => t.DetectedText)));
-            }).Wait();
-        }
+        //    Task.Run(async () =>
+        //    {
+        //        var imageAnalysisService = new ImageAnalysisService();
+        //        var result = await imageAnalysisService.AnalyzeImage(base64Image);
+        //        Console.WriteLine("Labels:" + string.Join(", ", result.labels.Select(l => l.Name)));
+        //        Console.WriteLine("Text:" + string.Join(", ", result.textDetections.Select(t => t.DetectedText)));
+        //    }).Wait();
+        //}
 
         public static void TestSynthesizeSpeech()
         {

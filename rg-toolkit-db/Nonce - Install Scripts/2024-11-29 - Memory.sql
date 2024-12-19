@@ -145,8 +145,6 @@ values ('902544da-67e6-4fa8-a346-d1faa8b27a08', newID(), 'd6566df7-d61b-42dd-abe
         'Farm ARC/PLC: View ARC-County (ARC or ARC-CO) and PLC (Price Loss Coverage) information, including Base Acres, projected payments.', getdate(), getdate())
 
 
--- Ooops MemoryItems should be json object here
-
 /*
 ``` json
 {"section": "tilley", "module": "vault", "object": null, "category": null, "item": null, "description": "Farm Vault: Create and Edit Farm, Tract, Field records including APH, Production History, Yields, Acreage, Base Acres."}
