@@ -98,6 +98,16 @@ values ('902544da-67e6-4fa8-a346-d1faa8b27a08', newID(), '31dc0b6b-2b7a-499f-976
 insert into Memory (TenantID, ID, Name, Description, MemoryType, Is_Active, CreateDate, LastUpdate)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '2e42961e-c271-4570-818d-5ff2d76bb461', 'ProducerFarms', 'Producer Farms', 'vector', 1, getdate(), getdate())
 
+-- Create Memory "Budget" = 8df5bd0e-f97a-4fa4-9341-769f53effd53
+
+insert into Memory (TenantID, ID, Name, Description, MemoryType, Is_Active, CreateDate, LastUpdate)
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '8df5bd0e-f97a-4fa4-9341-769f53effd53', 'Budget', 'Budget', 'vector', 1, getdate(), getdate())
+
+-- Create Memory "Insurance" = 2bca80aa-d0a8-42b1-84e1-af07176462db
+
+insert into Memory (TenantID, ID, Name, Description, MemoryType, Is_Active, CreateDate, LastUpdate)
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '2bca80aa-d0a8-42b1-84e1-af07176462db', 'Insurance', 'Insurance', 'vector', 1, getdate(), getdate())
+
 
 
 -- --- ---
