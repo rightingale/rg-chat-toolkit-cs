@@ -92,7 +92,7 @@ namespace TestHarness
         public static async Task Test_MemoryUpdate()
         {
             MemoryController ws = new MemoryController(RG.Instance.EmbeddingCache);
-            await ws.MemoryItemUpdate(new MemoryItemUpdateRequest()
+            await ws.MemoryItem_Update(new MemoryItemUpdateRequest()
             {
                 TenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"),
                 MemoryItemID = Guid.NewGuid().ToString(),

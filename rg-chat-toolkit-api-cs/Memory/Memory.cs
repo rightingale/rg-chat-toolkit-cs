@@ -38,6 +38,26 @@ public class MemoryItemUpdateRequest : RequestBase
 }
 
 
+public class MemoryItemSearchRequest : RequestBase
+{
+    public string MemoryName { get; set; }
+    public string SearchText { get; set; }
+
+    public MemoryItemSearchRequest()
+    {
+        MemoryName = "";
+        SearchText = "";
+    }
+
+    public MemoryItemSearchRequest(string memoryName, string searchText)
+    {
+        MemoryName = memoryName;
+        SearchText = searchText;
+    }
+}
+
+
+
 [Route("[controller]")]
 [ApiController]
 public class MemoryController : ControllerBase
@@ -49,9 +69,36 @@ public class MemoryController : ControllerBase
         this.EmbeddingCache = embeddingCache;
     }
 
+    [HttpGet]
+    [Route("Item")]
+    public async Task<IActionResult> MemoryItem_Search([FromQuery] MemoryItemSearchRequest request)
+    {
+        if (request.MemoryName == null)
+        {
+            throw new ApplicationException("Memory name is required.");
+        }
+
+        var memory = DataMethods.Memory_Get(request.TenantID, request.MemoryName);
+        if (memory == null)
+        {
+            throw new ApplicationException($"Memory {request.MemoryName} not found.");
+        }
+
+        const string MEMORY_TYPE_VECTOR = "vector";
+        if (memory.MemoryType?.ToLower()?.StartsWith(MEMORY_TYPE_VECTOR) ?? false)
+        {
+            VectorStoreMemory vectorStoreMemory = new GenericVectorStoreMemory(memory.Name, this.EmbeddingCache);
+            var result = await vectorStoreMemory.Search(request.SearchText);
+
+            return Ok(result);
+        }
+
+        return Ok();
+    }
+
     [HttpPost]
     [Route("Item")]
-    public async Task<IActionResult> MemoryItemUpdate([FromBody] MemoryItemUpdateRequest request)
+    public async Task<IActionResult> MemoryItem_Update([FromBody] MemoryItemUpdateRequest request)
     {
         if (request.MemoryName == null)
         {

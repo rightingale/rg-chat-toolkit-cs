@@ -19,7 +19,7 @@ public class QdrantHelper
     protected readonly string collectionName;
     public readonly EmbeddingBase embeddingModel;
 
-    public QdrantHelper (string qdrantApiKey, string qdrantEndpoint, string collectionName, EmbeddingBase embeddingModel)
+    public QdrantHelper(string qdrantApiKey, string qdrantEndpoint, string collectionName, EmbeddingBase embeddingModel)
     {
         this.qdrantApiKey = qdrantApiKey;
         this.qdrantEndpoint = qdrantEndpoint;
@@ -82,6 +82,11 @@ public class QdrantHelper
                 var currentResult = result.Item1.Payload["json"];
                 stringBuilder.AppendLine(currentResult.ToString());
             }
+            else if (result.Item1.Payload.ContainsKey("content"))
+            {
+                var currentResult = result.Item1.Payload["content"];
+                stringBuilder.AppendLine(currentResult.ToString());
+            }
         }
 
         return stringBuilder.ToString();
@@ -102,7 +107,7 @@ public class QdrantHelper
                 attributes
             )
         };
-        await qdrant.UpsertVectorsAsync("memory", record);
+        await qdrant.UpsertVectorsAsync(this.collectionName, record);
 
         Console.WriteLine("Wrote id: " + key);
     }

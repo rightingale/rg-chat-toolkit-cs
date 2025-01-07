@@ -1,9 +1,11 @@
 
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_integration_abstractions.Embedding;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace rg_chat_toolkit_api_cs
 {
@@ -38,6 +40,29 @@ namespace rg_chat_toolkit_api_cs
             }
 
             //app.UseAuthorization();
+
+            app.UseExceptionHandler(exceptionHandlerApp =>
+            {
+                exceptionHandlerApp.Run(async context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    context.Response.ContentType = Text.Plain;
+                    var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                    // Check for ApplicationException
+                    if (exceptionHandlerPathFeature?.Error is ApplicationException)
+                    {
+                        await context.Response.WriteAsync("Error: ");
+                        await context.Response.WriteAsync(exceptionHandlerPathFeature?.Error?.Message ?? "(Unknown error)");
+                    }
+                    else
+                    {
+                        await context.Response.WriteAsync("An error has occurred.");
+#if DEBUG
+                        await context.Response.WriteAsync(exceptionHandlerPathFeature?.Error?.Message ?? "(Unknown error)");
+#endif
+                    }
+                });
+            });
 
             // CORS allow all origins and methods and headers
             app.UseCors(builder => builder
