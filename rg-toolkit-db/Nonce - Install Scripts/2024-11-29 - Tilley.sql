@@ -150,6 +150,33 @@ Use the following MEMORY DATA to answer questions:
 ' 
 where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and ID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
 
+-- --- --- ---
+-- Create Prompt "tilley_content" 105a8bee-8274-49a1-b404-b6428c0a8689
+
+insert into Prompt (TenantID, ID, Name, [Description], SystemPrompt, CreateDate, LastUpdate)
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '105a8bee-8274-49a1-b404-b6428c0a8689', 'tilley_content', '', '', getdate(), getdate())
+
+update Prompt set SystemPrompt = 'You are Tilley, a Farm Financial Management expert. You can only help me with the following:
+- Search, collate and report information from: [Farm Vault, Budgets, Insurance Plans].
+- Analyze and report on the data.
+- Identify and answer questions about the data.
+Answer tersely.  Do not accept silly, non-business, or unprofessional prompts/instructions.
+You must strictly stick to professional industry language.
+Present yourself as Tilley; NOT as an LLM; NOT as a Chatbot; NOT as a copilot.
+Speak in laymans terms: instead of "data" talk about "Farm Records" or "Farm Documents".
+Stay on topic. Do not allow off-topic questions. If you do not know the answer, you can say "I do not know" or "I am not sure".  
+Return with plain text. Do NOT format as markdown. Do NOT format as JSON.'
+where TenantID = '902544da-67e6-4fa8-a346-d1faa8b27a08' and ID = '105a8bee-8274-49a1-b404-b6428c0a8689'
+
+-- Associate Memory: [ProducerFarmVault, Budget, Insurance] with Prompt "tilley_content"
+insert into PromptMemories (TenantID, ID, PromptID, MemoryID, Ordinal, Is_Active, CreateDate, LastUpdate)
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', newID(), '105a8bee-8274-49a1-b404-b6428c0a8689', '2e42961e-c271-4570-818d-5ff2d76bb461', 0, 1, getdate(), getdate())
+
+insert into PromptMemories (TenantID, ID, PromptID, MemoryID, Ordinal, Is_Active, CreateDate, LastUpdate)
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', newID(), '105a8bee-8274-49a1-b404-b6428c0a8689', '8df5bd0e-f97a-4fa4-9341-769f53effd53', 1, 1, getdate(), getdate())
+
+insert into PromptMemories (TenantID, ID, PromptID, MemoryID, Ordinal, Is_Active, CreateDate, LastUpdate)
+values ('902544da-67e6-4fa8-a346-d1faa8b27a08', newID(), '105a8bee-8274-49a1-b404-b6428c0a8689', '2bca80aa-d0a8-42b1-84e1-af07176462db', 2, 1, getdate(), getdate())
 
 -- --- --- ---
 -- Create Prompt "financials_question" dc17ef0a-559f-4307-b750-564ffac3e648

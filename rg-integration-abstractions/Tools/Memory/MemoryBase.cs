@@ -24,7 +24,8 @@ public abstract class MemoryBase : ToolBase
     {
         if (memoryType.ToLower().StartsWith("vector"))
         {
-            var mem = new SmociVectorStoreMemory(embeddingCache);
+            //var mem = new SmociVectorStoreMemory(embeddingCache);
+            var mem = new GenericVectorStoreMemory(name, embeddingCache);
             mem.ToolName = name;
             return mem;
         }
