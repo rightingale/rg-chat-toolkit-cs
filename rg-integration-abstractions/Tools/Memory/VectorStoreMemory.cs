@@ -34,6 +34,11 @@ public abstract class VectorStoreMemory : MemoryBase
 
     public override async Task Add(string key, string value, string content)
     {
+        if (String.IsNullOrEmpty(value))
+        {
+            value = content;
+        }
+
         // Deserialize content into generic JSON object
         var jsonNode = JsonObject.Parse(content);
         Dictionary<string, object> attributes = new();

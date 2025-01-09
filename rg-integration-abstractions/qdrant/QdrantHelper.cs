@@ -75,8 +75,6 @@ public class QdrantHelper
             //    Console.Write(".");
             //}
 
-            //Console.WriteLine(result.Item1.Payload["Text"] + "\t" + result.Item2);
-
             if (result.Item1.Payload.ContainsKey("json"))
             {
                 var currentResult = result.Item1.Payload["json"];

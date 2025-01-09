@@ -52,8 +52,9 @@ namespace TestHarness
 
             Task.Run(async () =>
             {
+                await Test_MemorySearch();
                 //await Test_MemoryUpdate();
-                await Test_PromptChooser();
+                //await Test_PromptChooser();
                 //await TestInMemoryVectorStore_Server();
                 //await TestInMemoryVectorStore();
             }).Wait();
@@ -89,6 +90,20 @@ namespace TestHarness
             //TestWebScraper();
         }
 
+        public static async Task Test_MemorySearch()
+        {
+            MemoryController ws = new MemoryController(RG.Instance.EmbeddingCache);
+            var result = await ws.MemoryItem_Search(new MemoryItemSearchRequest()
+            {
+                TenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"),
+                MemoryName = "ProducerFarms",
+                SearchText = "Where do I grow cotton?"
+            });
+
+            // Serialize to json
+            Console.WriteLine(JsonConvert.SerializeObject(result));
+        }
+
         public static async Task Test_MemoryUpdate()
         {
             MemoryController ws = new MemoryController(RG.Instance.EmbeddingCache);
@@ -96,7 +111,7 @@ namespace TestHarness
             {
                 TenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"),
                 MemoryItemID = Guid.NewGuid().ToString(),
-                MemoryName = "tilley_navigation",
+                MemoryName = "Budget",
                 Value = "Test",
                 Json = "{\"producer_token\": \"test-test-test-testing-test\", \"county_name\":\"Lubbock\", \"reported_acreage\":\"1000\"}"
             });
