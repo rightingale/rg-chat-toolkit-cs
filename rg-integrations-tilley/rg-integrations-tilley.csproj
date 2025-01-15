@@ -14,8 +14,4 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\daitaas\totilley-daemon-cs\daitaas.tilley.biz\daitaas.tilley.biz.csproj" />
-  </ItemGroup>
-
 </Project>
