@@ -27,5 +27,9 @@ public partial class Tool
 
     public DateTime LastUpdate { get; set; }
 
+    public bool IsPrivate { get; set; }
+
+    public virtual ICollection<PromptTool> PromptTools { get; set; } = new List<PromptTool>();
+
     public virtual Tenant Tenant { get; set; } = null!;
 }

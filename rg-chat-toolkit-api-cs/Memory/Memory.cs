@@ -87,7 +87,7 @@ public class MemoryController : ControllerBase
         const string MEMORY_TYPE_VECTOR = "vector";
         if (memory.MemoryType?.ToLower()?.StartsWith(MEMORY_TYPE_VECTOR) ?? false)
         {
-            VectorStoreMemory vectorStoreMemory = new GenericVectorStoreMemory(memory.Name, this.EmbeddingCache);
+            VectorStoreMemory vectorStoreMemory = new GenericVectorStoreMemory(memory.Name, memory.Description, this.EmbeddingCache);
             var result = await vectorStoreMemory.Search(request.SearchText);
 
             return Ok(result);
@@ -114,7 +114,7 @@ public class MemoryController : ControllerBase
         const string MEMORY_TYPE_VECTOR = "vector";
         if (memory.MemoryType?.ToLower()?.StartsWith(MEMORY_TYPE_VECTOR) ?? false)
         {
-            VectorStoreMemory vectorStoreMemory = new GenericVectorStoreMemory(memory.Name, this.EmbeddingCache);
+            VectorStoreMemory vectorStoreMemory = new GenericVectorStoreMemory(memory.Name, memory.Description, this.EmbeddingCache);
             await vectorStoreMemory.Add(request.MemoryItemID, request.Value, request.Json);
         }
 

@@ -27,7 +27,7 @@ public class ChatCompletion
         this.EmbeddingCache = embeddingCache;
     }
 
-    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? voiceName, string? languageCode, string? responseFormat, List<MemoryBase> memories)
+    public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? voiceName, string? languageCode, string? responseFormat, List<MemoryBase> memories, List<ToolBase> tools)
     {
         Dictionary<int, string> toolCallIdsByIndex = new();
         Dictionary<int, string> functionNamesByIndex = new();
@@ -54,21 +54,27 @@ public class ChatCompletion
         {
             foreach (var memory in memories)
             {
-                var searchResults = await memory.Search(messages[0].Content);
-
-                if (searchResults != null)
+                if (memory.DoPreload)
                 {
-                    Console.WriteLine("Search results:\n\n\t" + searchResults.Content + "\n\n");
-                    messagesList.Add(new Message(Message.ROLE_SYSTEM, searchResults.Content));
+                    var searchResults = await memory.Search(messages[0].Content);
+
+                    if (searchResults != null)
+                    {
+                        Console.WriteLine("Search results:\n\n\t" + searchResults.Content + "\n\n");
+                        messagesList.Add(new Message(Message.ROLE_SYSTEM, searchResults.Content));
+                    }
                 }
             }
         }
 
         // Tools:
-        FindGroceryItemVectorStoreMemory findGroceryItemTool = new FindGroceryItemVectorStoreMemory(this.EmbeddingCache);
-        findGroceryItemTool.ToolName = "find_grocery_item";//Name, as defined in the DB
-        //findGroceryItemTool.DoPreload = true;
-        toolsByName.Add(findGroceryItemTool.ToolName, findGroceryItemTool);
+        foreach (var tool in tools)
+        {
+            if (tool.ToolName != null)
+            {
+                toolsByName.Add(tool.ToolName, tool);
+            }
+        }
 
         List<ToolBase> enabledTools = new();
 
@@ -94,7 +100,7 @@ public class ChatCompletion
             }
             else
             {
-                enabledTools.Add(findGroceryItemTool);
+                enabledTools.Add(tool.Value);
             }
         }
 
@@ -109,7 +115,8 @@ public class ChatCompletion
         }
         foreach (var tool in enabledTools)
         {
-            options.Tools.Add(tool.GetToolDefinition());
+            var def = tool.GetToolDefinition();
+            options.Tools.Add(def);
         }
 
         var streamingResponse = await client.GetChatCompletionsStreamingAsync(options);
@@ -161,7 +168,7 @@ public class ChatCompletion
                         FunctionAguments = functionArgumentBuildersByIndex[indexIdPair.Key].ToString()
                     };
 
-                    var toolResponseMessage = await GetToolCallResponseMessage(toolRequestMessage);
+                    var toolResponseMessage = await GetToolCallResponseMessage(toolRequestMessage, toolsByName);
 
                     bool DO_INTERPRET = true;
 
@@ -172,7 +179,7 @@ public class ChatCompletion
                         newMessages.AddRange(messages);
                         newMessages.Add(new Message(role: Message.ROLE_SYSTEM, content: toolResponseMessage.Content));
                         ChatCompletion recursiveChatCompletion = new ChatCompletion(this.EmbeddingCache);
-                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, null, languageCode, responseFormat, memories);
+                        var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, null, languageCode, responseFormat, memories, tools);
 
                         //// Add the TOOL request.
                         //var allMessages = handleAddMessage(toolRequestMessage);
@@ -197,20 +204,12 @@ public class ChatCompletion
     /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/overview/azure/ai.openai-readme?view=azure-dotnet-preview
     /// </summary>
-    internal async Task<Message> GetToolCallResponseMessage(Message toolCall)
+    internal async Task<Message> GetToolCallResponseMessage(Message toolCall, Dictionary<string, ToolBase> toolsByName)
     {
         if (toolCall == null || string.IsNullOrEmpty(toolCall.FunctionName))
         {
             throw new ArgumentNullException(nameof(toolCall));
         }
-
-        // Tools:
-        Dictionary<string, ToolBase> toolsByName = new();
-        FindGroceryItemVectorStoreMemory findGroceryItemTool = new FindGroceryItemVectorStoreMemory(this.EmbeddingCache);
-        findGroceryItemTool.ToolName = "find_grocery_item";//Name, as defined in the DB
-        findGroceryItemTool.DoPreload = true;
-        toolsByName.Add(findGroceryItemTool.ToolName, findGroceryItemTool);
-
 
         if (toolsByName.TryGetValue(toolCall.FunctionName, out ToolBase? value))
         {

@@ -18,4 +18,8 @@ public partial class PromptTool
     public DateTime CreateDate { get; set; }
 
     public DateTime LastUpdate { get; set; }
+
+    public virtual Prompt Prompt { get; set; } = null!;
+
+    public virtual Tool Tool { get; set; } = null!;
 }

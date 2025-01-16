@@ -437,6 +437,16 @@ public partial class RgToolkitContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.PromptId).HasColumnName("PromptID");
             entity.Property(e => e.ToolId).HasColumnName("ToolID");
+
+            entity.HasOne(d => d.Prompt).WithMany(p => p.PromptTools)
+                .HasForeignKey(d => new { d.TenantId, d.PromptId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptTools_PromptID");
+
+            entity.HasOne(d => d.Tool).WithMany(p => p.PromptTools)
+                .HasForeignKey(d => new { d.TenantId, d.ToolId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptTools_ToolID");
         });
 
         modelBuilder.Entity<PromptUtterance>(entity =>

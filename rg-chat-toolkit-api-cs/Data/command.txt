@@ -15,4 +15,4 @@ set CONNECTION_RG="Server=db.TEST.datanac.io;Database=RG-Toolkit;User ID=---REDA
 
 echo %CONNECTION_RG%
 
-dotnet ef dbcontext scaffold %CONNECTION_RG% Microsoft.EntityFrameworkCore.SqlServer --output-dir .\Data\Models --force
+dotnet ef dbcontext scaffold "%CONNECTION_RG%" Microsoft.EntityFrameworkCore.SqlServer --output-dir .\Data\Models --force

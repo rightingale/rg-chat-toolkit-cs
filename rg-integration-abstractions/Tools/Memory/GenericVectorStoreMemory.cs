@@ -31,7 +31,7 @@ public class GenericVectorStoreMemory : VectorStoreMemory
         .AddEnvironmentVariables()
         .Build();
 
-    public GenericVectorStoreMemory(string collectionName, IRGEmbeddingCache embeddingCache)
+    public GenericVectorStoreMemory(string collectionName, string description, IRGEmbeddingCache embeddingCache)
         : base(embeddingCache)
     {
         var openaiApiKey = config["openai-apikey"];
@@ -53,6 +53,9 @@ public class GenericVectorStoreMemory : VectorStoreMemory
         }
 
         this.QDRANT = new QdrantHelper(qdrantApiKey, qdrantEndpoint, collectionName, this.EMBEDDING);
+
+        this.ToolName = collectionName;
+        this.ToolDescription = description;
     }
 
     // ---
@@ -85,7 +88,26 @@ public class GenericVectorStoreMemory : VectorStoreMemory
 
     public override ChatCompletionsFunctionToolDefinition GetToolDefinition()
     {
-        throw new NotImplementedException();
+        return new ChatCompletionsFunctionToolDefinition()
+        {
+            Name = this.ToolName,
+            Description = this.ToolDescription,
+            Parameters = BinaryData.FromObjectAsJson(
+            new
+            {
+                Type = "object",
+                Properties = new
+                {
+                    Text = new
+                    {
+                        Type = "string",
+                        Description = "Search query.",
+                    },
+                },
+                Required = new[] { "Text" },
+            },
+            new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
+        };
     }
 
 }

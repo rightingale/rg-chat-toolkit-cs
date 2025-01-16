@@ -6,6 +6,7 @@ using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_chat_toolkit_cs.Speech;
+using rg_integration_abstractions.Tools;
 using rg_integration_abstractions.Tools.Memory;
 using System.Diagnostics;
 using System.Text;
@@ -149,15 +150,37 @@ public class ChatCompletionController : ControllerBase
 
             // Construct memories:
             var memories = new List<MemoryBase>();
+            var tools = new List<ToolBase>();
             foreach (var promptMemory in prompt.PromptMemories.Where(mem => mem.Memory.IsActive))
             {
                 var memory = MemoryBase.Create(promptMemory.Memory.Name, promptMemory.Memory.Description, promptMemory.Memory.MemoryType, RG.Instance.EmbeddingCache);
                 memories.Add(memory);
+
+                // Add memories as tools,
+                // if it doesn't already exist in PromptTools, and DoPreload is false.
+                if (prompt.PromptTools.Any(tool => tool.Tool.Name == memory.ToolName) == false && memory.DoPreload == false)
+                {
+                    tools.Add(memory);
+                }
+            }
+
+            foreach (var promptTool in prompt.PromptTools.Where(tool => tool.Tool.IsActive))
+            {
+                var tool = ToolBase.Create(promptTool.Tool.Name, promptTool.Tool.Description, promptTool.Tool.Assembly, promptTool.Tool.Type, RG.Instance.EmbeddingCache);
+                if (tool != null)
+                {
+                    // Add the tool if it is not already in the list
+                    if (tools.Any(t => t.ToolName == tool.ToolName) == false)
+                    {
+                        tools.Add(tool);
+                    }
+                }
             }
 
             // Build the response:
             var response = RGChatInstance.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
-                                   true /*allowTools*/, null, request.LanguageCode, prompt.ReponseContentTypeName, memories);
+                                   true /*allowTools*/, null, request.LanguageCode, prompt.ReponseContentTypeName, 
+                                   memories, tools);
 
             if (request.DoStreamResponse)
             {

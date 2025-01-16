@@ -70,15 +70,20 @@ public abstract class VectorStoreMemory : MemoryBase
         Console.WriteLine($"Searching for: {text}");
 #endif
 
+#if DEBUG
         // timer
         var timer = new System.Diagnostics.Stopwatch();
         timer.Start();
+#endif
 
         var searchResponse = await this.Search_Intern(text);
 
+#if DEBUG
         // timer
         timer.Stop();
         Console.WriteLine($"Search took {timer.ElapsedMilliseconds} ms");
+        Console.WriteLine("Results:\n" + searchResponse + "\n---\n");
+#endif
 
         if (!String.IsNullOrEmpty(searchResponse))
         {
@@ -129,6 +134,9 @@ public abstract class VectorStoreMemory : MemoryBase
 
             // Lookup in vector store
             var searchResponse = await this.Search_Intern(text);
+#if DEBUG
+            Console.WriteLine("Results:\n" + searchResponse + "\n---\n");
+#endif
             return new Message(role: "tool", content: ToolInterpretationPrompt + "\n" + searchResponse ?? string.Empty);
         }
         else

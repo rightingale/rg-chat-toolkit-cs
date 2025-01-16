@@ -1,38 +1,10 @@
 ﻿BS Tenant
 787923AB-0D9F-EF11-ACED-021FE1D77A3B
 
-
-insert into Prompt
-    (TenantID, ID, Name, SystemPrompt, ReponseContentTypeName, DoStreamResponse)
-values
-    ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', newID(), 'instore_experience_helper', '', 'text/plain', null)
-
-
-
-instore_experience_helper
+instore_experience_helper Prompt
 3EFDDFBC-0ED2-43D7-9232-5461B8709762
 
-
--- --- --- ---
-
-
-
-insert into Tool
-    (TenantID, ID, Name, Description, Parameters, Assembly, Type, Method)
-values
-    ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', newID(), 'find_grocery_items', '', '', 'rg-integrations-epic'/*Assembly*/, 'rg.integrations.epic.Tools.Memory.FindGroceryItemVectorStoreMemory', '')
-
-
-find_grocery_items
+find_grocery_items Tool
 FA84BBDF-A4B2-4AE3-82F4-6D387C258633
 
-
-
-insert into PromptTools
-    (TenantID, PromptID, ToolID)
-values
-    ('787923AB-0D9F-EF11-ACED-021FE1D77A3B', '3EFDDFBC-0ED2-43D7-9232-5461B8709762', 'FA84BBDF-A4B2-4AE3-82F4-6D387C258633')
-
-
-
-----
+.

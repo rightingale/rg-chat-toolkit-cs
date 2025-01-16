@@ -23,6 +23,8 @@ public partial class Memory
 
     public DateTime LastUpdate { get; set; }
 
+    public bool IsPrivate { get; set; }
+
     public virtual ICollection<PromptMemory> PromptMemories { get; set; } = new List<PromptMemory>();
 
     public virtual Tenant Tenant { get; set; } = null!;

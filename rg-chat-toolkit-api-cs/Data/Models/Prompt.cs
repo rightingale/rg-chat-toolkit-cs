@@ -33,6 +33,8 @@ public partial class Prompt
 
     public virtual ICollection<PromptPersona> PromptPersonas { get; set; } = new List<PromptPersona>();
 
+    public virtual ICollection<PromptTool> PromptTools { get; set; } = new List<PromptTool>();
+
     public virtual ICollection<PromptUtterance> PromptUtterances { get; set; } = new List<PromptUtterance>();
 
     public virtual ContentType ReponseContentTypeNameNavigation { get; set; } = null!;
