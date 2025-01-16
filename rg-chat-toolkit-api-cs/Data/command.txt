@@ -2,6 +2,13 @@
 REM Don't even think about it.  This command is just for reference.
 
 
+dotnet tool install --global dotnet-ef
+dotnet tool update --global dotnet-ef
+
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+
+
+
 cmd
 
 set CONNECTION_RG="Server=db.TEST.datanac.io;Database=RG-Toolkit;User ID=---REDACTED---;Password=---REDACTED---;TrustServerCertificate=True"
