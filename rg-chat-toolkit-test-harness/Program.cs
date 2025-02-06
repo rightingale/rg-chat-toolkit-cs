@@ -394,7 +394,7 @@ namespace TestHarness
 
             Task.Run(async () =>
             {
-                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache(), new ChatCompletionSettings() { });
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be very verbose.",
                     new[] {
                 new Message("system", "Respond in ES-419."),
@@ -432,7 +432,7 @@ namespace TestHarness
                         new Message("user", "What is the current weather in Paris? Please give Celius, F, and Kelvin."),
                 }.ToList();
 
-                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache(), new ChatCompletionSettings() { });
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
                     true /*allowTools*/, null, null, null, null, null);
@@ -533,7 +533,7 @@ namespace TestHarness
                         new Message("user", "Sargento cheese"),
                 }.ToList();
 
-                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache(), new ChatCompletionSettings() { });
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
                     true /*allowTools*/, null, null, null, null, null);

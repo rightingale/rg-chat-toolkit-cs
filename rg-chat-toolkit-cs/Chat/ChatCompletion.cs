@@ -14,17 +14,28 @@ using rg_chat_toolkit_cs.Speech;
 
 namespace rg_chat_toolkit_cs.Chat;
 
+public class SettingsBase
+{
+    public string? AuthorizedUserID { get; set; }
+}
+
+public class ChatCompletionSettings: SettingsBase
+{
+}
+
 public class ChatCompletion
 {
     protected readonly IRGEmbeddingCache EmbeddingCache;
+    protected readonly ChatCompletionSettings Settings;
 
     // Use reponse formats like HTTP content types
     public const string RESPONSE_FORMAT_JSON = "application/json";
     public const string RESPONSE_FORMAT_TEXT = "text/plain";
 
-    public ChatCompletion(IRGEmbeddingCache embeddingCache)
+    public ChatCompletion(IRGEmbeddingCache embeddingCache, ChatCompletionSettings settings)
     {
         this.EmbeddingCache = embeddingCache;
+        this.Settings = settings;
     }
 
     public async IAsyncEnumerable<string> SendChatCompletion(Guid sessionID, string systemPrompt, Message[] messages, bool allowTools, string? voiceName, string? languageCode, string? responseFormat, List<MemoryBase> memories, List<ToolBase> tools)
@@ -56,7 +67,7 @@ public class ChatCompletion
             {
                 if (memory.DoPreload)
                 {
-                    var searchResults = await memory.Search(messages[0].Content);
+                    var searchResults = await memory.Search(messages[0].Content, this.Settings?.AuthorizedUserID);
 
                     if (searchResults != null)
                     {
@@ -91,7 +102,7 @@ public class ChatCompletion
                 timer.Start();
 
                 // Preload memory tool with a "Search" operation.
-                var toolResponse = await memoryTool.Search(latestMessage.Content);
+                var toolResponse = await memoryTool.Search(latestMessage.Content, this.Settings?.AuthorizedUserID);
                 messagesList.Add(new Message(Message.ROLE_SYSTEM, toolResponse.Content));
 
                 // timer
@@ -178,7 +189,7 @@ public class ChatCompletion
                         List<Message> newMessages = new List<Message>();
                         newMessages.AddRange(messages);
                         newMessages.Add(new Message(role: Message.ROLE_SYSTEM, content: toolResponseMessage.Content));
-                        ChatCompletion recursiveChatCompletion = new ChatCompletion(this.EmbeddingCache);
+                        ChatCompletion recursiveChatCompletion = new ChatCompletion(this.EmbeddingCache, this.Settings);
                         var interpretedResults = recursiveChatCompletion.SendChatCompletion(sessionID, systemPrompt, newMessages.ToArray(), false, null, languageCode, responseFormat, memories, tools);
 
                         //// Add the TOOL request.

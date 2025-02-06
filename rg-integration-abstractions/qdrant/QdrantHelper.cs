@@ -10,6 +10,10 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Windows.Markup;
 
+using Qdrant.Client;
+using static Qdrant.Client.Grpc.Conditions;
+using Qdrant.Client.Grpc;
+
 namespace rg.integration.interfaces.qdrant;
 
 public class QdrantHelper
@@ -27,7 +31,7 @@ public class QdrantHelper
         this.embeddingModel = embeddingModel;
     }
 
-    public async Task<String> Search(string text, int topN)
+    public async Task<String> Search(string text, int topN, string? filterUserID)
     {
         // timer
         var timer = new System.Diagnostics.Stopwatch();
@@ -39,11 +43,21 @@ public class QdrantHelper
         timer.Stop();
         Console.WriteLine($"Embedding took {timer.ElapsedMilliseconds} ms");
 
-        // Search qdrant
-        HttpClient httpClient = new();
-        httpClient.DefaultRequestHeaders.Add("api-key", this.qdrantApiKey);
-        var qdrant = new QdrantVectorDbClient(httpClient, embeddingModel.EmbeddingSize, this.qdrantEndpoint);
-        var searchResultsAsync = qdrant.FindNearestInCollectionAsync(collectionName, embedding, 0, topN, false);
+        //// Search qdrant
+        //HttpClient httpClient = new();
+        //httpClient.DefaultRequestHeaders.Add("api-key", this.qdrantApiKey);
+        //var qdrant = new QdrantVectorDbClient(httpClient, embeddingModel.EmbeddingSize, this.qdrantEndpoint);
+        //IEnumerable<string>? requiredTags = null;
+        //if (filterUserID != null)
+        //{
+        //    requiredTags = new string[] { filterUserID };
+        //}
+        //var searchResultsAsync = qdrant.FindNearestInCollectionAsync(collectionName, embedding, 0, topN, false, requiredTags);
+
+        var client = new QdrantClient(address: new Uri(this.qdrantEndpoint), apiKey: this.qdrantApiKey);
+        // Filter where producer_token = filterUserID
+        var searchResults = await client.SearchAsync(collectionName: this.collectionName, vector: embedding, filter: MatchKeyword("Producer_token", filterUserID), limit: (ulong)topN);
+        //var searchResults = await client.SearchAsync(collectionName: this.collectionName, vector: embedding);
 
         //// Find the mean & stddev & max of the result.Item2 (distance) values
         //double sum = 0;
@@ -64,7 +78,7 @@ public class QdrantHelper
         //double stddev = Math.Sqrt(sum2 / count - mean * mean);
 
         StringBuilder stringBuilder = new();
-        await foreach (var result in searchResultsAsync)
+        foreach (var result in searchResults)
         {
             //if (result.Item2 > mean || Math.Abs(result.Item2 - mean) < stddev)
             //{
@@ -75,14 +89,14 @@ public class QdrantHelper
             //    Console.Write(".");
             //}
 
-            if (result.Item1.Payload.ContainsKey("json"))
+            if (result.Payload.ContainsKey("json"))
             {
-                var currentResult = result.Item1.Payload["json"];
+                var currentResult = result.Payload["json"];
                 stringBuilder.AppendLine(currentResult.ToString());
             }
-            else if (result.Item1.Payload.ContainsKey("content"))
+            else if (result.Payload.ContainsKey("content"))
             {
-                var currentResult = result.Item1.Payload["content"];
+                var currentResult = result.Payload["content"];
                 stringBuilder.AppendLine(currentResult.ToString());
             }
         }

@@ -64,7 +64,7 @@ public class InMemoryVectorStoreMemory : MemoryBase
         }
     }
 
-    public override async Task<Message?> Search(string text)
+    public override async Task<Message?> Search(string text, string? userID)
     {
 #if DEBUG
         Console.WriteLine($"Searching for: {text}");

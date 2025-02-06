@@ -88,7 +88,7 @@ public class MemoryController : ControllerBase
         if (memory.MemoryType?.ToLower()?.StartsWith(MEMORY_TYPE_VECTOR) ?? false)
         {
             VectorStoreMemory vectorStoreMemory = new GenericVectorStoreMemory(memory.Name, memory.Description, this.EmbeddingCache);
-            var result = await vectorStoreMemory.Search(request.SearchText);
+            var result = await vectorStoreMemory.Search(request.SearchText, request.UserID.ToString().ToLower());
 
             return Ok(result);
         }

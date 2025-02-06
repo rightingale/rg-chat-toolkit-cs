@@ -9,18 +9,23 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace rg_integration_abstractions.Tools.Memory;
+public class MemorySettings
+{
+    public string? AuthorizedUserID { get; set; }
+}
 
 public abstract class MemoryBase : ToolBase
 {
     public abstract string ToolInterpretationPrompt { get; }
     protected abstract int TopN { get; }
     public bool DoPreload { get; set; } = false;
+    public MemorySettings? Settings = new MemorySettings();
 
     public abstract Task Add(string key, string value, string content);
 
-    public abstract Task<Message?> Search(string text);
+    public abstract Task<Message?> Search(string text, string? userID);
 
-    public static MemoryBase Create(string name, string description, string memoryType, IRGEmbeddingCache embeddingCache)
+    public static MemoryBase Create(string name, string description, string memoryType, IRGEmbeddingCache embeddingCache, MemorySettings? settings)
     {
         if (memoryType.ToLower().StartsWith("vector"))
         {
@@ -28,6 +33,7 @@ public abstract class MemoryBase : ToolBase
             var mem = new GenericVectorStoreMemory(name, description, embeddingCache);
             mem.ToolName = name;
             mem.ToolDescription = description;
+            mem.Settings = settings;
             return mem;
         }
         else

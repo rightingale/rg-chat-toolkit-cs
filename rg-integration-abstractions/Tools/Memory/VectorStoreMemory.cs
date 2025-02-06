@@ -64,7 +64,7 @@ public abstract class VectorStoreMemory : MemoryBase
         await this.QdrantInstance.Upsert(key, value, attributes);
     }
 
-    public override async Task<Message?> Search(string text)
+    public override async Task<Message?> Search(string text, string? userID)
     {
 #if DEBUG
         Console.WriteLine($"Searching for: {text}");
@@ -76,7 +76,7 @@ public abstract class VectorStoreMemory : MemoryBase
         timer.Start();
 #endif
 
-        var searchResponse = await this.Search_Intern(text);
+        var searchResponse = await this.Search_Intern(text, userID);
 
 #if DEBUG
         // timer
@@ -95,9 +95,9 @@ public abstract class VectorStoreMemory : MemoryBase
         }
     }
 
-    protected async Task<string> Search_Intern(string text)
+    protected async Task<string> Search_Intern(string text, string? userID)
     {
-        return await this.QdrantInstance.Search(text, TopN);
+        return await this.QdrantInstance.Search(text, TopN, userID);
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public abstract class VectorStoreMemory : MemoryBase
 #endif
 
             // Lookup in vector store
-            var searchResponse = await this.Search_Intern(text);
+            var searchResponse = await this.Search_Intern(text, this.Settings?.AuthorizedUserID);
 #if DEBUG
             Console.WriteLine("Results:\n" + searchResponse + "\n---\n");
 #endif

@@ -142,7 +142,7 @@ namespace OpenAIApiExample
             string jsonResponse = await response.Content.ReadAsStringAsync();
 
             // Lookup:
-            ChatCompletion chatCompletion = new ChatCompletion(null);
+            ChatCompletion chatCompletion = new ChatCompletion(null, null);
             var lookupResponse = chatCompletion.SendChatCompletion(
                 sessionID,
                 SYSTEM_PROMPT_LOOKUP_MEDICATION,
