@@ -1,4 +1,5 @@
 ﻿using Amazon.Polly;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Chat.Helpers;
@@ -57,20 +58,21 @@ public class ChatCompletionResponse
 
 [Route("[controller]")]
 [ApiController]
+[Authorize]
 public class ChatCompletionController : ControllerBase
 {
     protected readonly IRGEmbeddingCache EmbeddingCache;
-    protected readonly ChatCompletion RGChatInstance;
 
     public ChatCompletionController(IRGEmbeddingCache embeddingCache)
     {
         this.EmbeddingCache = embeddingCache;
-        RGChatInstance = new ChatCompletion(EmbeddingCache);
     }
 
     [HttpPost("SendChatCompletion_Sync")]
     public async Task<IActionResult> SendChatCompletion_Sync([FromBody] ChatCompletionRequest request)
     {
+        AuthenticationHelper.Authorize(User.Identity, request);
+
         StringBuilder stringBuilder = new StringBuilder();
 
         try
@@ -91,6 +93,8 @@ public class ChatCompletionController : ControllerBase
     [HttpPost]
     public async IAsyncEnumerable<string> SendChatCompletion([FromBody] ChatCompletionRequest request)
     {
+        AuthenticationHelper.Authorize(User.Identity, request);
+
         // timer
         var timer = new Stopwatch();
         timer.Start();
@@ -153,7 +157,8 @@ public class ChatCompletionController : ControllerBase
             var tools = new List<ToolBase>();
             foreach (var promptMemory in prompt.PromptMemories.Where(mem => mem.Memory.IsActive))
             {
-                var memory = MemoryBase.Create(promptMemory.Memory.Name, promptMemory.Memory.Description, promptMemory.Memory.MemoryType, RG.Instance.EmbeddingCache);
+                MemorySettings memorySettings = new MemorySettings { AuthorizedUserID = request.UserID.ToString().ToLower() };
+                var memory = MemoryBase.Create(promptMemory.Memory.Name, promptMemory.Memory.Description, promptMemory.Memory.MemoryType, RG.Instance.EmbeddingCache, memorySettings);
                 memories.Add(memory);
 
                 // Add memories as tools,
@@ -177,6 +182,9 @@ public class ChatCompletionController : ControllerBase
                 }
             }
 
+            // RG settings: UserID is authorized by the middleware.\
+            var chatSettings = new ChatCompletionSettings { AuthorizedUserID = request.UserID.ToString().ToLower() };
+            ChatCompletion RGChatInstance = new ChatCompletion(EmbeddingCache, chatSettings);
             // Build the response:
             var response = RGChatInstance.SendChatCompletion(request.SessionID, prompt.SystemPrompt, _messages?.ToArray() ?? [],
                                    true /*allowTools*/, null, request.LanguageCode, prompt.ReponseContentTypeName, 
