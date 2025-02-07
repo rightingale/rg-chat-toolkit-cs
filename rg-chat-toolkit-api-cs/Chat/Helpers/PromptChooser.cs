@@ -1,21 +1,26 @@
-﻿using rg_chat_toolkit_api_cs.Data;
+﻿using rg_chat_toolkit_api_cs.Cache;
+using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_api_cs.Data.Models;
+using rg_chat_toolkit_cs.Cache;
+using rg_integration_abstractions.Embedding;
 
 namespace rg_chat_toolkit_api_cs.Chat.Helpers;
 
 public static class PromptChooser
 {
-    public static async Task<string?> ChoosePrompt (Guid tenantID, string searchQuery)
+    public static async Task<string?> ChoosePrompt (Guid tenantID, string searchQuery, IRGEmbeddingCache embeddingCache)
     {
-        var memoryStore = await DataMethods.Prompt_EnsureEmbedding(tenantID);
+        // These embeddings are stored only privately. Embedding model does not need to be configurable.
+        var embeddingModel = RGEmbedding.CreateDefault(embeddingCache);
 
+        var memoryStore = await DataMethods.Prompt_EnsureEmbedding(tenantID, embeddingModel);
 
-        var searchEmbedding = await RG.Instance.EmbeddingModel.GetEmbedding(searchQuery);
+        var searchEmbedding = await embeddingModel.GetEmbedding(searchQuery);
         var searchResponse = memoryStore.Search(searchEmbedding, 10);
 
         //// Get the first bigram, splitting on word boundaries:
         var searchQueryHalf = searchQuery.Split(" ").Take(2).Aggregate((a, b) => a + " " + b);
-        var searchEmbeddingHalf = await RG.Instance.EmbeddingModel.GetEmbedding(searchQueryHalf);
+        var searchEmbeddingHalf = await embeddingModel.GetEmbedding(searchQueryHalf);
         var searchResponseHalf = memoryStore.Search(searchEmbeddingHalf, 10);
 
         foreach (var currentResult in searchResponse)

@@ -11,14 +11,25 @@ public abstract class EmbeddingBase
 {
     protected IRGEmbeddingCache? cache;
 
-    internal EmbeddingBase (IRGEmbeddingCache? cache)
+    internal EmbeddingBase(IRGEmbeddingCache? cache)
     {
         this.cache = cache;
     }
 
-    public abstract Task<float[]?> GetEmbedding(string text);
+    public abstract Task<float[]> GetEmbedding(string text);
+
+    public string VectorName
+    {
+        get
+        {
+            const string VECTOR_NAME_PATTERN = "embedding_{0}_{1}";
+            string vectorName = String.Format(VECTOR_NAME_PATTERN, this.EmbeddingModel, this.EmbeddingSize);
+            return vectorName;
+        }
+    }
 
     public abstract int EmbeddingSize { get; }
+    public abstract string EmbeddingModel { get; }
 
 }
 

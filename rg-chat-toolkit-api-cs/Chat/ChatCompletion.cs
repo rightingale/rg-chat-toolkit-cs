@@ -102,7 +102,7 @@ public class ChatCompletionController : ControllerBase
         string? chosenPromptName = request.PromptName;
         if (request.PromptName == null)
         {
-            chosenPromptName = await PromptChooser.ChoosePrompt(request.TenantID, request.RequestMessageContent ?? "");
+            chosenPromptName = await PromptChooser.ChoosePrompt(request.TenantID, request.RequestMessageContent ?? "", this.EmbeddingCache);
         }
 
         if (chosenPromptName == null)
@@ -158,7 +158,7 @@ public class ChatCompletionController : ControllerBase
             foreach (var promptMemory in prompt.PromptMemories.Where(mem => mem.Memory.IsActive))
             {
                 MemorySettings memorySettings = new MemorySettings { AuthorizedUserID = request.UserID.ToString().ToLower() };
-                var memory = MemoryBase.Create(promptMemory.Memory.Name, promptMemory.Memory.Description, promptMemory.Memory.MemoryType, RG.Instance.EmbeddingCache, memorySettings);
+                var memory = MemoryBase.Create(promptMemory.Memory.Name, promptMemory.Memory.Description, promptMemory.Memory.MemoryType, this.EmbeddingCache, memorySettings);
                 memories.Add(memory);
 
                 // Add memories as tools,
@@ -171,7 +171,7 @@ public class ChatCompletionController : ControllerBase
 
             foreach (var promptTool in prompt.PromptTools.Where(tool => tool.Tool.IsActive))
             {
-                var tool = ToolBase.Create(promptTool.Tool.Name, promptTool.Tool.Description, promptTool.Tool.Assembly, promptTool.Tool.Type, RG.Instance.EmbeddingCache);
+                var tool = ToolBase.Create(promptTool.Tool.Name, promptTool.Tool.Description, promptTool.Tool.Assembly, promptTool.Tool.Type, this.EmbeddingCache);
                 if (tool != null)
                 {
                     // Add the tool if it is not already in the list

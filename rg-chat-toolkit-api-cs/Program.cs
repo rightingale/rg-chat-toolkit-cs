@@ -55,7 +55,6 @@ namespace rg_chat_toolkit_api_cs
 
             // RG
             builder.Services.AddSingleton<IRGEmbeddingCache, RGCache>();
-            builder.Services.AddSingleton<EmbeddingBase, RGEmbedding>();
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -173,10 +172,6 @@ namespace rg_chat_toolkit_api_cs
             });
 
             var app = builder.Build();
-
-            var embeddingCache = app.Services.GetRequiredService<IRGEmbeddingCache>();
-            var embeddingModel = app.Services.GetRequiredService<EmbeddingBase>();
-            RG.Instance = new RG(embeddingCache, embeddingModel);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
