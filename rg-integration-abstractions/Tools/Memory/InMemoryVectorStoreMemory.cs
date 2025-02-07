@@ -43,7 +43,7 @@ public class InMemoryVectorStoreMemory : MemoryBase
         {
             throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
         }
-        this.EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
+        this.EMBEDDING = new OpenAI3LargeEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
     }
 
     public override string ToolInterpretationPrompt
