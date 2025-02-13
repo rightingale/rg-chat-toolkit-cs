@@ -11,6 +11,15 @@ public static class AuthenticationHelper
     const string CLAIMS_KEY_USER_ROLE_RGADMIN = "rg:user_role";
     const string CLAIMS_VALUE_USER_ROLE_RGADMIN_ADMIN = "administrator";
 
+    public const string MESSAGE_TENANT_ID_MISSING = "Authentication: Missing TenantID header.";
+    public const string MESSAGE_TENANT_ID_MISSING_REQUEST = "Authentication: Missing TenantID parameter.";
+    public const string MESSAGE_TENANT_ID_INVALID = "Authentication: Invalid TenantID header.";
+    public const string MESSAGE_TENANT_ID_INVALID_REQUEST = "Authentication: Invalid TenantID parameter.";
+    public const string MESSAGE_TENANT_ID_UNKNOWN = "Authentication: Unknown TenantID.";
+    public const string MESSAGE_TENANT_ID_UNKNOWN_HEADER = "Authentication: Unknown TenantID header.";
+
+    public const string MESSAGE_TOKEN_INVALID = "Authentication: Security token invalid or expired.";
+
     public static void Authorize(IIdentity? identity, RequestBase request)
     {
         // Verify that the TenantID in the HTTP Header value matches the TenantID in the request
@@ -18,7 +27,20 @@ public static class AuthenticationHelper
         var httpContext = new HttpContextAccessor().HttpContext;
         var httpHeaderTenantID = httpContext?.Request?.Headers["TenantID"].ToString();
         var requestTenantID = request.TenantID.ToString();
-        if (httpHeaderTenantID == requestTenantID)
+
+        var isHttpHeaderTenantIDGuidParsed = Guid.TryParse(httpHeaderTenantID, out var httpHeaderTenantIDGuid);
+        var isRequestTenantIDGuidParsed = Guid.TryParse(requestTenantID, out var requestTenantIDGuid);
+
+        if (!isHttpHeaderTenantIDGuidParsed)
+        {
+            throw new UnauthorizedAccessException(MESSAGE_TENANT_ID_INVALID);
+        }
+        if (!isRequestTenantIDGuidParsed)
+        {
+            throw new UnauthorizedAccessException(MESSAGE_TENANT_ID_INVALID_REQUEST);
+        }
+
+        if (httpHeaderTenantIDGuid == requestTenantIDGuid)
         {
             isAuthorizedTenant = true;
         }

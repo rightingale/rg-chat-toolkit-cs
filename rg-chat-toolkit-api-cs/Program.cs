@@ -72,6 +72,8 @@ namespace rg_chat_toolkit_api_cs
                         },
                         OnChallenge = context =>
                         {
+                            string? errorMessage = null;
+
                             bool isTenantIDSpecified = context.HttpContext.Items.ContainsKey("TenantID");
                             bool isTenantIDValid = false;
                             if (isTenantIDSpecified)
@@ -82,33 +84,40 @@ namespace rg_chat_toolkit_api_cs
                                 {
                                     try
                                     {
-                                        LookupValidIssuer(tenantIdGuid);
-                                        isTenantIDValid = true;
+                                        var issuer = LookupValidIssuer(tenantIdGuid);
+                                        if (issuer != null)
+                                        {
+                                            isTenantIDValid = true;
+                                        }//else LookupValidIssuer throws SecurityTokenInvalidIssuerException
                                     }
                                     catch (SecurityTokenInvalidIssuerException)
                                     {
-                                        isTenantIDValid = false;
+                                        errorMessage = AuthenticationHelper.MESSAGE_TENANT_ID_UNKNOWN_HEADER;
                                     }
                                 }
+                                else
+                                {
+                                    errorMessage = AuthenticationHelper.MESSAGE_TENANT_ID_INVALID;
+                                }
                             }
-
-                            const string MESSAGE_TENANT_ID_MISSING = "Authentication: Missing TenantID.";
-                            const string MESSAGE_TENANT_ID_INVALID = "Authentication: Invalid TenantID.";
-
-                            var message = isTenantIDSpecified ? (isTenantIDValid ? MESSAGE_TENANT_ID_INVALID : MESSAGE_TENANT_ID_MISSING) : MESSAGE_TENANT_ID_MISSING;
+                            else
+                            {
+                                errorMessage = AuthenticationHelper.MESSAGE_TENANT_ID_MISSING;
+                            }
 
                             // Skip the default logic.
                             context.HandleResponse();
-
                             // Return a custom response.
                             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            //context.Response.ContentType = "application/json";
-                            //var result = JsonConvert.SerializeObject(new
-                            //{
-                            //    StatusCode = context.Response.StatusCode,
-                            //    Message = message
-                            //});
-                            return context.Response.WriteAsync(message);
+
+                            if (!isTenantIDValid)
+                            {
+                                return context.Response.WriteAsync(errorMessage ?? "");
+                            }
+                            else
+                            {
+                                return context.Response.WriteAsync(AuthenticationHelper.MESSAGE_TOKEN_INVALID);
+                            }
                         }
                     };
 
@@ -147,7 +156,7 @@ namespace rg_chat_toolkit_api_cs
                                 Guid tenantIdGuid;
                                 if (!Guid.TryParse(tenantId, out tenantIdGuid))
                                 {
-                                    throw new SecurityTokenInvalidIssuerException("Authentication: Malformed TenantID");
+                                    throw new SecurityTokenInvalidIssuerException(AuthenticationHelper.MESSAGE_TENANT_ID_INVALID);
                                 }
 
                                 var expectedIssuer = LookupValidIssuer(tenantIdGuid); // Dynamically get issuer
@@ -228,7 +237,7 @@ namespace rg_chat_toolkit_api_cs
             }
             else
             {
-                throw new SecurityTokenInvalidIssuerException("Unknown TenantID");
+                throw new SecurityTokenInvalidIssuerException(AuthenticationHelper.MESSAGE_TENANT_ID_UNKNOWN);
             }
         }
     }
