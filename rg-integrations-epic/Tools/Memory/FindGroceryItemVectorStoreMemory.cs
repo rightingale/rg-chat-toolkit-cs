@@ -1,6 +1,5 @@
 ﻿using Azure.AI.OpenAI;
 using Microsoft.Extensions.Configuration;
-using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Newtonsoft.Json;
 using rg.integration.interfaces.qdrant;
 using rg_chat_toolkit_cs.Cache;
@@ -53,7 +52,7 @@ public class FindGroceryItemVectorStoreMemory : VectorStoreMemory
         {
             throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
         }
-        this.EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
+        this.EMBEDDING = new OpenAI3LargeEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
 
         var qdrantApiKey = config["qdrant-apikey"];
         var qdrantEndpoint = config["qdrant-endpoint"];

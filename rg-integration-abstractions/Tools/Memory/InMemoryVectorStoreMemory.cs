@@ -43,7 +43,7 @@ public class InMemoryVectorStoreMemory : MemoryBase
         {
             throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
         }
-        this.EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
+        this.EMBEDDING = new OpenAI3LargeEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
     }
 
     public override string ToolInterpretationPrompt
@@ -55,8 +55,13 @@ public class InMemoryVectorStoreMemory : MemoryBase
     }
 
     // ---
-    public override async Task Add (string key, string value, string content)
+    public override async Task Add (string key, string value, string content, Guid? filterUserID)
     {
+        if (filterUserID != null && filterUserID.HasValue)
+        {
+            throw new ApplicationException("InMemoryVectorStoreMemory does not support user_id filter.");
+        }
+
         var embedding = await this.EMBEDDING.GetEmbedding(value);
         if (embedding != null)
         {
@@ -64,7 +69,7 @@ public class InMemoryVectorStoreMemory : MemoryBase
         }
     }
 
-    public override async Task<Message?> Search(string text)
+    public override async Task<Message?> Search(string text, string? userID)
     {
 #if DEBUG
         Console.WriteLine($"Searching for: {text}");

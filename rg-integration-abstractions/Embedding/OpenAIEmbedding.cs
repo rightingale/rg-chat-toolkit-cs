@@ -9,13 +9,10 @@ using System.Threading.Tasks;
 
 namespace rg_integration_abstractions.Embedding;
 
-public class OpenAIEmbedding : EmbeddingBase
+public abstract class OpenAIEmbedding : EmbeddingBase
 {
     protected readonly string opanaiEndpoint;
     protected readonly string openaiApiKey;
-
-    public const int VECTOR_SIZE = 3072;
-    public const string MODEL_NAME = "text-embedding-3-large";
 
     protected readonly IRGEmbeddingCache embeddingCache;
 
@@ -27,9 +24,7 @@ public class OpenAIEmbedding : EmbeddingBase
         this.opanaiEndpoint = opanaiEndpoint;
     }
 
-    public override int EmbeddingSize => VECTOR_SIZE;
-
-    public override async Task<float[]?> GetEmbedding(string text)
+    public override async Task<float[]> GetEmbedding(string text)
     {
         if (embeddingCache != null)
         {
@@ -37,8 +32,12 @@ public class OpenAIEmbedding : EmbeddingBase
             var cacheValue = await embeddingCache.Get(cacheKey);
             if (cacheValue != null)
             {
-                Console.WriteLine($"*** *** ***Cache hit for {text}");
-                return JsonConvert.DeserializeObject<float[]>(cacheValue);
+                var cachedValue = JsonConvert.DeserializeObject<float[]>(cacheValue);
+                if (cachedValue != null)
+                {
+                    Console.WriteLine($"*** *** ***Cache hit for {text}");
+                    return cachedValue;
+                }
             }
         }
 
@@ -50,7 +49,8 @@ public class OpenAIEmbedding : EmbeddingBase
         request.AddHeader("Authorization", $"Bearer {this.openaiApiKey}");
         request.AddJsonBody(new
         {
-            model = MODEL_NAME,
+            model = this.EmbeddingModel,
+            dimensions = this.EmbeddingSize,
             input = text
         });
 

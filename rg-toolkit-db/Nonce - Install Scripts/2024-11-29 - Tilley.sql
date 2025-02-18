@@ -92,6 +92,10 @@ values ('902544da-67e6-4fa8-a346-d1faa8b27a08', 'd6566df7-d61b-42dd-abe7-e121af0
 insert into PromptMemories (TenantID, ID, PromptID, MemoryID, Ordinal, Is_Active, CreateDate, LastUpdate)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', newID(), '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5', 'd6566df7-d61b-42dd-abe7-e121af01c2e6', 0, 1, getdate(), getdate())
 
+-- tilley_navigation D6566DF7-D61B-42DD-ABE7-E121AF01C2E6
+update Memory set Description = 'Lookup Tilley navigation paths or menu items' where id = 'D6566DF7-D61B-42DD-ABE7-E121AF01C2E6'
+
+
 -- ---
 -- Create Memory "ProducerFarms" = 2e42961e-c271-4570-818d-5ff2d76bb461
 
@@ -105,18 +109,19 @@ update Memory set Description = 'Search for farms, fields, planted acres, plante
 insert into Memory (TenantID, ID, Name, Description, MemoryType, Is_Active, CreateDate, LastUpdate)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '8df5bd0e-f97a-4fa4-9341-769f53effd53', 'Budget', 'Budget', 'vector', 1, getdate(), getdate())
 
-update Memory set Description = '' where id = '8df5bd0e-f97a-4fa4-9341-769f53effd53'
+update Memory set Description = 'Search for Farm Budgets, Budget Lines, Budget Schedules' where id = '8df5bd0e-f97a-4fa4-9341-769f53effd53'
 
 -- Create Memory "Insurance" = 2bca80aa-d0a8-42b1-84e1-af07176462db
 
 insert into Memory (TenantID, ID, Name, Description, MemoryType, Is_Active, CreateDate, LastUpdate)
 values ('902544da-67e6-4fa8-a346-d1faa8b27a08', '2bca80aa-d0a8-42b1-84e1-af07176462db', 'Insurance', 'Insurance', 'vector', 1, getdate(), getdate())
 
-update Memory set Description = '' where id = '2bca80aa-d0a8-42b1-84e1-af07176462db'
+update Memory set Description = 'Search for Insurance Scenarios, Insurance Policies, Insurance Plans, coverage, liability' where id = '2bca80aa-d0a8-42b1-84e1-af07176462db'
 
 -- --- ---
 
 select * from Memory where Name = 'tilley_navigation'
+
 
 select * from PromptMemories where PromptID = '31dc0b6b-2b7a-499f-976a-71c9eaca7bc5'
 

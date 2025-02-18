@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -9,6 +8,13 @@ using System.Net.Http.Json;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Windows.Markup;
+
+using Qdrant.Client;
+using static Qdrant.Client.Grpc.Conditions;
+using Qdrant.Client.Grpc;
+using System.Linq;
+using System;
+using Google.Protobuf.Collections;
 
 namespace rg.integration.interfaces.qdrant;
 
@@ -27,23 +33,45 @@ public class QdrantHelper
         this.embeddingModel = embeddingModel;
     }
 
-    public async Task<String> Search(string text, int topN)
+    public async Task<String> Search(string text, int topN, string? filterUserID)
     {
+#if DEBUG
         // timer
         var timer = new System.Diagnostics.Stopwatch();
         timer.Start();
+#endif
 
         var embedding = this.embeddingModel.GetEmbedding(text).Result;
 
+#if DEBUG
         // timer
         timer.Stop();
         Console.WriteLine($"Embedding took {timer.ElapsedMilliseconds} ms");
+#endif
 
-        // Search qdrant
-        HttpClient httpClient = new();
-        httpClient.DefaultRequestHeaders.Add("api-key", this.qdrantApiKey);
-        var qdrant = new QdrantVectorDbClient(httpClient, embeddingModel.EmbeddingSize, this.qdrantEndpoint);
-        var searchResultsAsync = qdrant.FindNearestInCollectionAsync(collectionName, embedding, 0, topN, false);
+        var client = new QdrantClient(address: new Uri(this.qdrantEndpoint), apiKey: this.qdrantApiKey);
+        IReadOnlyList<ScoredPoint>? searchResults = null;
+        if (filterUserID != null && !String.IsNullOrEmpty(filterUserID))
+        {
+            if (String.IsNullOrEmpty(this.embeddingModel.VectorName))
+            {
+                // Filter where user_id = filterUserID
+                searchResults = await client.SearchAsync(collectionName: this.collectionName,
+                    vector: embedding,
+                    filter: MatchKeyword("user_id", filterUserID),
+                    limit: (ulong)topN);
+            }
+            else
+            {
+                // Filter where user_id = filterUserID
+                searchResults = await client.SearchAsync(collectionName: this.collectionName,
+                    vector: embedding,
+                    vectorName: this.embeddingModel.VectorName,
+                    filter: MatchKeyword("user_id", filterUserID),
+                    limit: (ulong)topN);
+            }
+        }
+        //var searchResults = await client.SearchAsync(collectionName: this.collectionName, vector: embedding);
 
         //// Find the mean & stddev & max of the result.Item2 (distance) values
         //double sum = 0;
@@ -64,26 +92,20 @@ public class QdrantHelper
         //double stddev = Math.Sqrt(sum2 / count - mean * mean);
 
         StringBuilder stringBuilder = new();
-        await foreach (var result in searchResultsAsync)
+        if (searchResults != null)
         {
-            //if (result.Item2 > mean || Math.Abs(result.Item2 - mean) < stddev)
-            //{
-            //    Console.Write("*");
-            //}
-            //else
-            //{
-            //    Console.Write(".");
-            //}
-
-            if (result.Item1.Payload.ContainsKey("json"))
+            foreach (var result in searchResults)
             {
-                var currentResult = result.Item1.Payload["json"];
-                stringBuilder.AppendLine(currentResult.ToString());
-            }
-            else if (result.Item1.Payload.ContainsKey("content"))
-            {
-                var currentResult = result.Item1.Payload["content"];
-                stringBuilder.AppendLine(currentResult.ToString());
+                if (result.Payload.ContainsKey("json"))
+                {
+                    var currentResult = result.Payload["json"];
+                    stringBuilder.AppendLine(currentResult.ToString());
+                }
+                else if (result.Payload.ContainsKey("content"))
+                {
+                    var currentResult = result.Payload["content"];
+                    stringBuilder.AppendLine(currentResult.ToString());
+                }
             }
         }
 
@@ -92,21 +114,76 @@ public class QdrantHelper
 
     public async Task Upsert(string key, string value, Dictionary<string, object> attributes)
     {
-        HttpClient httpClient = new();
-        httpClient.DefaultRequestHeaders.Add("api-key", this.qdrantApiKey);
-        var qdrant = new QdrantVectorDbClient(httpClient, embeddingModel.EmbeddingSize, this.qdrantEndpoint);
+        var client = new QdrantClient(address: new Uri(this.qdrantEndpoint), apiKey: this.qdrantApiKey);
 
         var embedding = await this.embeddingModel.GetEmbedding(value);
-        var record = new QdrantVectorRecord[]
-        {
-            new QdrantVectorRecord(
-                key/*point id*/,
-                embedding,
-                attributes
-            )
-        };
-        await qdrant.UpsertVectorsAsync(this.collectionName, record);
 
+        Vectors vectors = new Vectors();
+
+        // Convert attributes from Dictionary<string, object> to MapField<string, Value>
+        var attributesMap = new MapField<string, Value>();
+        foreach (var attribute in attributes)
+        {
+            if (attribute.Value is string)
+            {
+                attributesMap.Add(attribute.Key, new Value { StringValue = attribute.Value.ToString() });
+            }
+            else if (attribute.Value is int)
+            {
+                attributesMap.Add(attribute.Key, new Value { IntegerValue = (int)attribute.Value });
+            }
+            else if (attribute.Value is long)
+            {
+                attributesMap.Add(attribute.Key, new Value { IntegerValue = (long)attribute.Value });
+            }
+            else if (attribute.Value is double)
+            {
+                attributesMap.Add(attribute.Key, new Value { DoubleValue = (double)attribute.Value });
+            }
+            else if (attribute.Value is float)
+            {
+                attributesMap.Add(attribute.Key, new Value { DoubleValue = (float)attribute.Value });
+            }
+            else if (attribute.Value is bool)
+            {
+                attributesMap.Add(attribute.Key, new Value { BoolValue = (bool)attribute.Value });
+            }
+            else
+            {
+                throw new Exception($"Unsupported attribute type: {attribute.Value.GetType()}");
+            }
+        }
+
+        Guid? id = null;
+        // If id exists in dictionary:
+        if (attributesMap.ContainsKey("id"))
+        {
+            id = Guid.Parse(attributesMap["id"].StringValue);
+        } else
+        {
+            id = Guid.NewGuid();
+        }
+
+        // convert embedding from float[] to QDrant client IReadOnlyList<PointStruct>
+        var point = new PointStruct
+        {
+            Id = new PointId() { Uuid = id.ToString() },
+            Vectors = new Dictionary<string, Vector>
+            {
+                [this.embeddingModel.VectorName] = new Vector(embedding)
+            }
+        };
+        // For each dictionary, add point.Payload.Add(key,value);
+        foreach (var attribute in attributesMap)
+        {
+            point.Payload.Add(attribute.Key, attribute.Value);
+        }
+
+        var points = new List<PointStruct> { point };
+        await client.UpsertAsync(collectionName: this.collectionName, points: points);
+
+#if DEBUG
         Console.WriteLine("Wrote id: " + key);
+#endif
     }
 }

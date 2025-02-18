@@ -22,79 +22,9 @@ namespace weather_vector_indexer
             .AddUserSecrets<Program>()
             .Build();
 
-
         static void Main(string[] args)
         {
-            //PersistEmbeddingsForAllFiles();
-            Search();
-        }
-
-        static void Search()
-        {
-            Task.Run(async () =>
-            {
-                // Generate embedding for this string and copy results to the clipboard.
-                var text = "Show me expenses";
-
-                var embedding = GetEmbedding(text).Result;
-                //Console.WriteLine(string.Join(",", embedding));
-                // Save to clipboard
-                var json = JsonConvert.SerializeObject(embedding);
-                await TextCopy.ClipboardService.SetTextAsync(json);
-                //Console.WriteLine("Embedding copied to clipboard.");
-
-                Console.WriteLine($"Searching for '{text}'...");
-
-                // Search qdrant
-                HttpClient httpClient = new();
-                var qdrantApiKey = config["qdrant-apikey"];
-                httpClient.DefaultRequestHeaders.Add("api-key", qdrantApiKey);
-                var qdrantEndpoint = config["qdrant-endpoint"];
-                var qdrant = new QdrantVectorDbClient(httpClient, VECTOR_SIZE, qdrantEndpoint);
-                var searchResultsAsync = qdrant.FindNearestInCollectionAsync("memory", embedding, 0, 10, false);
-
-                // Find the mean & stddev & max of the result.Item2 (distance) values
-                double sum = 0;
-                double sum2 = 0;
-                int count = 0;
-                double max = 0;
-                await foreach (var result in searchResultsAsync)
-                {
-                    sum += result.Item2;
-                    sum2 += result.Item2 * result.Item2;
-                    count++;
-                    if (result.Item2 > max)
-                    {
-                        max = result.Item2;
-                    }
-                }
-                double mean = sum / count;
-                double stddev = Math.Sqrt(sum2 / count - mean * mean);
-
-                await foreach (var result in searchResultsAsync)
-                {
-                    if (result.Item2 > mean || Math.Abs(result.Item2 - mean) < stddev)
-                    {
-                        Console.Write("*");
-                    }
-                    else
-                    {
-                        Console.Write(".");
-                    }
-                    Console.WriteLine(result.Item1.Payload["description"] + "\t" + result.Item2);
-
-                    SmociItem resultItem = new SmociItem();
-                    resultItem.Section = result.Item1.Payload["section"]?.ToString();
-                    resultItem.Module = result.Item1.Payload["module"]?.ToString();
-                    resultItem.Object = result.Item1.Payload["object"]?.ToString();
-                    resultItem.Category = result.Item1.Payload["category"]?.ToString();
-                    resultItem.Item = result.Item1.Payload["item"]?.ToString();
-                    resultItem.Description = result.Item1.Payload["description"]?.ToString();
-
-                    Console.WriteLine(JsonConvert.SerializeObject(resultItem));
-                }
-                Console.WriteLine("Search results printed.");
-            }).Wait();
+            PersistEmbeddingsForAllFiles();
         }
 
         static void PersistEmbeddingsForAllFiles()

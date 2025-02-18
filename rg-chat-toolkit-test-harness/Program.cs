@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using OpenAIApiExample;
 using rg_chat_toolkit_api_cs;
+using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Chat;
 using rg_chat_toolkit_api_cs.Chat.Helpers;
 using rg_chat_toolkit_api_cs.Data;
@@ -43,10 +44,7 @@ namespace TestHarness
             {
                 throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
             }
-            var EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
-
-            RG.Instance = new RG(embeddingCache, EMBEDDING);
-
+            var EMBEDDING = new OpenAI3LargeEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
 
             //TestToolFunctionGroceryApi();
 
@@ -93,7 +91,10 @@ namespace TestHarness
 
         public static async Task Test_MemorySearch()
         {
-            MemoryController ws = new MemoryController(RG.Instance.EmbeddingCache);
+            // Use mock cache.
+            IRGEmbeddingCache embeddingCache = new TestHarness.RGCache();
+
+            MemoryController ws = new MemoryController(embeddingCache);
             var result = await ws.MemoryItem_Search(new MemoryItemSearchRequest()
             {
                 TenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"),
@@ -107,7 +108,10 @@ namespace TestHarness
 
         public static async Task Test_MemoryUpdate()
         {
-            MemoryController ws = new MemoryController(RG.Instance.EmbeddingCache);
+            // Use mock cache.
+            IRGEmbeddingCache embeddingCache = new TestHarness.RGCache();
+
+            MemoryController ws = new MemoryController(embeddingCache);
             await ws.MemoryItem_Update(new MemoryItemUpdateRequest()
             {
                 TenantID = Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"),
@@ -120,8 +124,11 @@ namespace TestHarness
 
         public static async Task Test_PromptChooser()
         {
+            // Use mock cache.
+            IRGEmbeddingCache embeddingCache = new TestHarness.RGCache();
+
             var searchQuery = "what is my total assets on balance sheet";
-            var prompt = await PromptChooser.ChoosePrompt(Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"), searchQuery);
+            var prompt = await PromptChooser.ChoosePrompt(Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"), searchQuery, embeddingCache);
 
             Console.WriteLine("Search query: " + searchQuery);
             Console.WriteLine("Prompt: " + prompt);
@@ -130,7 +137,11 @@ namespace TestHarness
 
         public static async Task TestInMemoryVectorStore_Server()
         {
-            var memoryStore = await DataMethods.Prompt_EnsureEmbedding(Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"));
+            // Use mock cache.
+            IRGEmbeddingCache embeddingCache = new TestHarness.RGCache();
+            var embeddingModel = RGEmbedding.CreateDefault(embeddingCache);
+
+            var memoryStore = await DataMethods.Prompt_EnsureEmbedding(Guid.Parse("902544DA-67E6-4FA8-A346-D1FAA8B27A08"), embeddingModel);
             var searchQuery = "show the page where I analyze my balance sheet and financials";
 
             // Get a 2-gram bigram, splitting on word boundaries:
@@ -138,9 +149,9 @@ namespace TestHarness
             //// Get a 3-gram
             //var searchQueryThird = searchQuery.Split(" ").Take(3).Aggregate((a, b) => a + " " + b);
 
-            var searchEmbedding = await RG.Instance.EmbeddingModel.GetEmbedding(searchQuery);
-            var searchEmbeddingHalf = await RG.Instance.EmbeddingModel.GetEmbedding(searchQueryHalf);
-            //var searchEmbeddingThird = await RG.Instance.EmbeddingModel.GetEmbedding(searchQueryThird);
+            var searchEmbedding = await embeddingModel.GetEmbedding(searchQuery);
+            var searchEmbeddingHalf = await embeddingModel.GetEmbedding(searchQueryHalf);
+            //var searchEmbeddingThird = await embeddingModel.GetEmbedding(searchQueryThird);
 
             var searchResponse = memoryStore.Search(searchEmbedding, 10);
             var searchResponseHalf = memoryStore.Search(searchEmbeddingHalf, 10);
@@ -193,7 +204,8 @@ namespace TestHarness
 
         public static async Task TestInMemoryVectorStore()
         {
-            var embeddingCache = RG.Instance.EmbeddingCache;
+            // Use mock cache.
+            IRGEmbeddingCache embeddingCache = new TestHarness.RGCache();
 
             var config = new ConfigurationManager()
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
@@ -207,7 +219,7 @@ namespace TestHarness
             {
                 throw new ApplicationException("Error: Invalid configuration. Missing openai-apikey or openai-endpoint-embeddings.");
             }
-            var EMBEDDING = new OpenAIEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
+            var EMBEDDING = new OpenAI3LargeEmbedding(embeddingCache, openaiApiKey, openaiEndpoint);
 
             var memoryItems = new List<InMemoryVectorStore.KeyValueItem>();
             memoryItems.Add(new InMemoryVectorStore.KeyValueItem()
@@ -394,7 +406,7 @@ namespace TestHarness
 
             Task.Run(async () =>
             {
-                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache(), new ChatCompletionSettings() { });
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be very verbose.",
                     new[] {
                 new Message("system", "Respond in ES-419."),
@@ -432,7 +444,7 @@ namespace TestHarness
                         new Message("user", "What is the current weather in Paris? Please give Celius, F, and Kelvin."),
                 }.ToList();
 
-                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache(), new ChatCompletionSettings() { });
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Please be exceedingly concise (!).",
                     messages.ToArray(),
                     true /*allowTools*/, null, null, null, null, null);
@@ -533,7 +545,7 @@ namespace TestHarness
                         new Message("user", "Sargento cheese"),
                 }.ToList();
 
-                ChatCompletion chatCompletion = new ChatCompletion(new RGCache());
+                ChatCompletion chatCompletion = new ChatCompletion(new RGCache(), new ChatCompletionSettings() { });
                 var response = chatCompletion.SendChatCompletion(sessionID, "You are a helpful assistant. Be concise.",
                     messages.ToArray(),
                     true /*allowTools*/, null, null, null, null, null);
