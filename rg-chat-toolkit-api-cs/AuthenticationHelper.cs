@@ -20,12 +20,14 @@ public static class AuthenticationHelper
 
     public const string MESSAGE_TOKEN_INVALID = "Authentication: Security token invalid or expired.";
 
+    public const string HEADER_KEY_TENANT_ID = "rg-TenantId";
+
     public static void Authorize(IIdentity? identity, RequestBase request)
     {
         // Verify that the TenantID in the HTTP Header value matches the TenantID in the request
         bool isAuthorizedTenant = false;
         var httpContext = new HttpContextAccessor().HttpContext;
-        var httpHeaderTenantID = httpContext?.Request?.Headers["TenantID"].ToString();
+        var httpHeaderTenantID = httpContext?.Request?.Headers[HEADER_KEY_TENANT_ID].ToString();
         var requestTenantID = request.TenantID.ToString();
 
         var isHttpHeaderTenantIDGuidParsed = Guid.TryParse(httpHeaderTenantID, out var httpHeaderTenantIDGuid);

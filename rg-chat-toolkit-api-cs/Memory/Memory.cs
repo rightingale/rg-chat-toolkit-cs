@@ -1,4 +1,5 @@
 ﻿using Amazon.Polly;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Chat.Helpers;
@@ -60,6 +61,7 @@ public class MemoryItemSearchRequest : RequestBase
 
 [Route("[controller]")]
 [ApiController]
+[Authorize]
 public class MemoryController : ControllerBase
 {
     protected readonly IRGEmbeddingCache EmbeddingCache;
@@ -73,6 +75,8 @@ public class MemoryController : ControllerBase
     [Route("Item")]
     public async Task<IActionResult> MemoryItem_Search([FromQuery] MemoryItemSearchRequest request)
     {
+        AuthenticationHelper.Authorize(User.Identity, request);
+
         if (request.MemoryName == null)
         {
             throw new ApplicationException("Memory name is required.");
@@ -100,6 +104,8 @@ public class MemoryController : ControllerBase
     [Route("Item")]
     public async Task<IActionResult> MemoryItem_Update([FromBody] MemoryItemUpdateRequest request)
     {
+        AuthenticationHelper.Authorize(User.Identity, request);
+
         if (request.MemoryName == null)
         {
             throw new ApplicationException("Memory name is required.");
@@ -114,8 +120,8 @@ public class MemoryController : ControllerBase
         const string MEMORY_TYPE_VECTOR = "vector";
         if (memory.MemoryType?.ToLower()?.StartsWith(MEMORY_TYPE_VECTOR) ?? false)
         {
-            VectorStoreMemory vectorStoreMemory = new GenericVectorStoreMemory(memory.Name, memory.Description, this.EmbeddingCache);
-            await vectorStoreMemory.Add(request.MemoryItemID, request.Value, request.Json);
+            VectorStoreMemory vectorStoreMemory = new GenericVectorStoreMemory(memory.Name, memory.Description ?? memory.Name, this.EmbeddingCache);
+            await vectorStoreMemory.Add(request.MemoryItemID, request.Value, request.Json, request.UserID);
         }
 
         return Ok();

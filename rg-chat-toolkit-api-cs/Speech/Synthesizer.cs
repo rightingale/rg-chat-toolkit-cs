@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using rg_chat_toolkit_api_cs.Cache;
 using rg_chat_toolkit_api_cs.Chat;
 using rg_chat_toolkit_api_cs.Data;
@@ -43,6 +44,7 @@ Sample JSON for SynthesizeSpeechRequest API
 
 [Route("[controller]")]
 [ApiController]
+[Authorize]
 public class SynthesizerController : ControllerBase
 {
     [HttpGet]

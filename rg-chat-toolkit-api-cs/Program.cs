@@ -64,9 +64,9 @@ namespace rg_chat_toolkit_api_cs
                     {
                         OnMessageReceived = context =>
                         {
-                            if (context.Request.Headers.ContainsKey("TenantID"))
+                            if (context.Request.Headers.ContainsKey(AuthenticationHelper.HEADER_KEY_TENANT_ID))
                             {
-                                context.HttpContext.Items["TenantID"] = context.Request.Headers["TenantID"].ToString();
+                                context.HttpContext.Items[AuthenticationHelper.HEADER_KEY_TENANT_ID] = context.Request.Headers[AuthenticationHelper.HEADER_KEY_TENANT_ID].ToString();
                             }
                             return Task.CompletedTask;
                         },
@@ -74,11 +74,11 @@ namespace rg_chat_toolkit_api_cs
                         {
                             string? errorMessage = null;
 
-                            bool isTenantIDSpecified = context.HttpContext.Items.ContainsKey("TenantID");
+                            bool isTenantIDSpecified = context.HttpContext.Items.ContainsKey(AuthenticationHelper.HEADER_KEY_TENANT_ID);
                             bool isTenantIDValid = false;
                             if (isTenantIDSpecified)
                             {
-                                var tenantId = context.HttpContext.Items["TenantID"]?.ToString();
+                                var tenantId = context.HttpContext.Items[AuthenticationHelper.HEADER_KEY_TENANT_ID]?.ToString();
                                 Guid tenantIdGuid;
                                 if (Guid.TryParse(tenantId, out tenantIdGuid))
                                 {
@@ -126,9 +126,9 @@ namespace rg_chat_toolkit_api_cs
                         IssuerSigningKeyResolver = (s, securityToken, identifier, parameters) =>
                         {
                             var httpContext = new HttpContextAccessor().HttpContext;
-                            if (httpContext != null && httpContext.Request.Headers.ContainsKey("TenantID"))
+                            if (httpContext != null && httpContext.Request.Headers.ContainsKey(AuthenticationHelper.HEADER_KEY_TENANT_ID))
                             {
-                                var tenantId = httpContext.Request.Headers["TenantID"].ToString();
+                                var tenantId = httpContext.Request.Headers[AuthenticationHelper.HEADER_KEY_TENANT_ID].ToString();
                                 Guid tenantIdGuid;
                                 if (Guid.TryParse(tenantId, out tenantIdGuid))
                                 {
@@ -150,9 +150,9 @@ namespace rg_chat_toolkit_api_cs
                         IssuerValidator = (issuer, securityToken, parameters) =>
                         {
                             var httpContext = new HttpContextAccessor().HttpContext;
-                            if (httpContext != null && httpContext.Items.ContainsKey("TenantID"))
+                            if (httpContext != null && httpContext.Items.ContainsKey(AuthenticationHelper.HEADER_KEY_TENANT_ID))
                             {
-                                var tenantId = httpContext.Items["TenantID"]?.ToString();
+                                var tenantId = httpContext.Items[AuthenticationHelper.HEADER_KEY_TENANT_ID]?.ToString();
                                 Guid tenantIdGuid;
                                 if (!Guid.TryParse(tenantId, out tenantIdGuid))
                                 {
@@ -167,7 +167,7 @@ namespace rg_chat_toolkit_api_cs
                             }
                             else
                             {
-                                throw new SecurityTokenInvalidIssuerException("Authentication: Missing TenantID");
+                                throw new SecurityTokenInvalidIssuerException("Authentication: Missing " + AuthenticationHelper.HEADER_KEY_TENANT_ID);
                             }
                             return issuer; // Return the validated issuer
                         }
@@ -204,9 +204,9 @@ namespace rg_chat_toolkit_api_cs
                     }
                     else
                     {
-                        await context.Response.WriteAsync("An error has occurred.");
+                        await context.Response.WriteAsync("An unknown error has occurred.");
 #if DEBUG
-                        await context.Response.WriteAsync(exceptionHandlerPathFeature?.Error?.Message ?? "(Unknown error)");
+                        await context.Response.WriteAsync(" " + exceptionHandlerPathFeature?.Error?.Message ?? "(Unknown error)");
 #endif
                     }
                 });
