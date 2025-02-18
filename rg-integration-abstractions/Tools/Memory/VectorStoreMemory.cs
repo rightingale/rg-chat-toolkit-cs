@@ -4,6 +4,7 @@ using rg.integration.interfaces.qdrant;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_integration_abstractions.Embedding;
+using rg_integration_abstractions.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +33,7 @@ public abstract class VectorStoreMemory : MemoryBase
 
     // ---
 
-    public override async Task Add(string key, string value, string content)
+    public override async Task Add(string key, string value, string content, Guid? filterUserID)
     {
         if (String.IsNullOrEmpty(value))
         {
@@ -40,19 +41,7 @@ public abstract class VectorStoreMemory : MemoryBase
         }
 
         // Deserialize content into generic JSON object
-        var jsonNode = JsonObject.Parse(content);
-        Dictionary<string, object> attributes = new();
-        if (jsonNode is JsonObject objJson)
-        {
-            // add all props to dictionary
-            foreach (var prop in objJson)
-            {
-                if (prop.Value != null)
-                {
-                    attributes[prop.Key] = prop.Value;
-                }
-            }
-        }
+        var attributes = JsonSimpleDeserializer.DeserializeJsonToDictionary(content);
 
         if (content != null)
         {
@@ -60,8 +49,53 @@ public abstract class VectorStoreMemory : MemoryBase
             attributes["content"] = content;
         }
 
-        var embedding = await this.EmbeddingModel.GetEmbedding(value);
+        if (filterUserID != null && filterUserID.HasValue)
+        {
+            attributes["user_id"] = filterUserID.Value.ToString();
+        }
+
         await this.QdrantInstance.Upsert(key, value, attributes);
+    }
+
+    private static object? ConvertJsonElement(JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                return ConvertJsonToString(element);
+            case JsonValueKind.Array:
+                return ConvertJsonArray(element);
+            case JsonValueKind.String:
+                return element.GetString();
+            case JsonValueKind.Number:
+                if (element.TryGetInt64(out long longValue))
+                    return longValue;
+                if (element.TryGetDouble(out double doubleValue))
+                    return doubleValue;
+                return element.GetDecimal();
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+                return element.GetBoolean();
+            case JsonValueKind.Null:
+                return null;
+            default:
+                throw new NotSupportedException($"Unsupported JSON value kind: {element.ValueKind}");
+        }
+    }
+
+    private static string ConvertJsonToString(JsonElement element)
+    {
+        return element.GetRawText();
+    }
+
+    private static List<object> ConvertJsonArray(JsonElement element)
+    {
+        var list = new List<object>();
+        foreach (var item in element.EnumerateArray())
+        {
+            list.Add(ConvertJsonElement(item));
+        }
+        return list;
     }
 
     public override async Task<Message?> Search(string text, string? userID)

@@ -50,23 +50,26 @@ public class QdrantHelper
 #endif
 
         var client = new QdrantClient(address: new Uri(this.qdrantEndpoint), apiKey: this.qdrantApiKey);
-        IReadOnlyList<ScoredPoint> searchResults;
-        if (String.IsNullOrEmpty(this.embeddingModel.VectorName))
+        IReadOnlyList<ScoredPoint>? searchResults = null;
+        if (filterUserID != null && !String.IsNullOrEmpty(filterUserID))
         {
-            // Filter where producer_token = filterUserID
-            searchResults = await client.SearchAsync(collectionName: this.collectionName,
-                vector: embedding,
-                filter: MatchKeyword("Producer_token", filterUserID),
-                limit: (ulong)topN);
-        }
-        else
-        {
-            // Filter where producer_token = filterUserID
-            searchResults = await client.SearchAsync(collectionName: this.collectionName,
-                vector: embedding,
-                vectorName: this.embeddingModel.VectorName,
-                filter: MatchKeyword("Producer_token", filterUserID),
-                limit: (ulong)topN);
+            if (String.IsNullOrEmpty(this.embeddingModel.VectorName))
+            {
+                // Filter where user_id = filterUserID
+                searchResults = await client.SearchAsync(collectionName: this.collectionName,
+                    vector: embedding,
+                    filter: MatchKeyword("user_id", filterUserID),
+                    limit: (ulong)topN);
+            }
+            else
+            {
+                // Filter where user_id = filterUserID
+                searchResults = await client.SearchAsync(collectionName: this.collectionName,
+                    vector: embedding,
+                    vectorName: this.embeddingModel.VectorName,
+                    filter: MatchKeyword("user_id", filterUserID),
+                    limit: (ulong)topN);
+            }
         }
         //var searchResults = await client.SearchAsync(collectionName: this.collectionName, vector: embedding);
 
@@ -89,17 +92,20 @@ public class QdrantHelper
         //double stddev = Math.Sqrt(sum2 / count - mean * mean);
 
         StringBuilder stringBuilder = new();
-        foreach (var result in searchResults)
+        if (searchResults != null)
         {
-            if (result.Payload.ContainsKey("json"))
+            foreach (var result in searchResults)
             {
-                var currentResult = result.Payload["json"];
-                stringBuilder.AppendLine(currentResult.ToString());
-            }
-            else if (result.Payload.ContainsKey("content"))
-            {
-                var currentResult = result.Payload["content"];
-                stringBuilder.AppendLine(currentResult.ToString());
+                if (result.Payload.ContainsKey("json"))
+                {
+                    var currentResult = result.Payload["json"];
+                    stringBuilder.AppendLine(currentResult.ToString());
+                }
+                else if (result.Payload.ContainsKey("content"))
+                {
+                    var currentResult = result.Payload["content"];
+                    stringBuilder.AppendLine(currentResult.ToString());
+                }
             }
         }
 
@@ -126,9 +132,17 @@ public class QdrantHelper
             {
                 attributesMap.Add(attribute.Key, new Value { IntegerValue = (int)attribute.Value });
             }
+            else if (attribute.Value is long)
+            {
+                attributesMap.Add(attribute.Key, new Value { IntegerValue = (long)attribute.Value });
+            }
             else if (attribute.Value is double)
             {
                 attributesMap.Add(attribute.Key, new Value { DoubleValue = (double)attribute.Value });
+            }
+            else if (attribute.Value is float)
+            {
+                attributesMap.Add(attribute.Key, new Value { DoubleValue = (float)attribute.Value });
             }
             else if (attribute.Value is bool)
             {
@@ -140,10 +154,20 @@ public class QdrantHelper
             }
         }
 
+        Guid? id = null;
+        // If id exists in dictionary:
+        if (attributesMap.ContainsKey("id"))
+        {
+            id = Guid.Parse(attributesMap["id"].StringValue);
+        } else
+        {
+            id = Guid.NewGuid();
+        }
+
         // convert embedding from float[] to QDrant client IReadOnlyList<PointStruct>
         var point = new PointStruct
         {
-            Id = new PointId() { Uuid = Guid.NewGuid().ToString() },
+            Id = new PointId() { Uuid = id.ToString() },
             Vectors = new Dictionary<string, Vector>
             {
                 [this.embeddingModel.VectorName] = new Vector(embedding)

@@ -55,8 +55,13 @@ public class InMemoryVectorStoreMemory : MemoryBase
     }
 
     // ---
-    public override async Task Add (string key, string value, string content)
+    public override async Task Add (string key, string value, string content, Guid? filterUserID)
     {
+        if (filterUserID != null && filterUserID.HasValue)
+        {
+            throw new ApplicationException("InMemoryVectorStoreMemory does not support user_id filter.");
+        }
+
         var embedding = await this.EMBEDDING.GetEmbedding(value);
         if (embedding != null)
         {

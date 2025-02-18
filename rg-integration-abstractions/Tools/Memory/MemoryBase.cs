@@ -21,7 +21,7 @@ public abstract class MemoryBase : ToolBase
     public bool DoPreload { get; set; } = false;
     public MemorySettings? Settings = new MemorySettings();
 
-    public abstract Task Add(string key, string value, string content);
+    public abstract Task Add(string key, string value, string content, Guid? filterUserID);
 
     public abstract Task<Message?> Search(string text, string? userID);
 
