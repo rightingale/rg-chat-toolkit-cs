@@ -1,0 +1,86 @@
+﻿DELETE collections/ProducerFarms
+
+
+PUT /collections/ProducerFarms
+{
+    "default_vector": "embedding_text-embedding-3-large_256",
+    "vectors": {
+        "embedding_text-embedding-3-large_256": {
+          "size": 256,
+          "distance": "Cosine"
+        },
+        "embedding_text-embedding-3-large_3072": {
+          "size": 3072,
+          "distance": "Cosine"
+        },
+        "embedding_text-embedding-3-small_1536": {
+          "size": 1536,
+          "distance": "Cosine"
+        }
+    }
+}
+
+
+GET collections/ProducerFarms
+
+--- --- ---     --- --- ---     --- --- ---
+
+DELETE collections/Budget
+
+
+PUT /collections/Budget
+{
+    "default_vector": "embedding_text-embedding-3-large_256",
+    "vectors": {
+        "embedding_text-embedding-3-large_256": {
+          "size": 256,
+          "distance": "Cosine"
+        },
+        "embedding_text-embedding-3-large_3072": {
+          "size": 3072,
+          "distance": "Cosine"
+        },
+        "embedding_text-embedding-3-small_1536": {
+          "size": 1536,
+          "distance": "Cosine"
+        }
+    }
+}
+
+
+GET collections/Budget
+
+--- --- ---     --- --- ---     --- --- ---
+
+DELETE collections/Insurance
+
+
+PUT /collections/Insurance
+{
+    "default_vector": "embedding_text-embedding-3-large_256",
+    "vectors": {
+        "embedding_text-embedding-3-large_256": {
+          "size": 256,
+          "distance": "Cosine"
+        },
+        "embedding_text-embedding-3-large_3072": {
+          "size": 3072,
+          "distance": "Cosine"
+        },
+        "embedding_text-embedding-3-small_1536": {
+          "size": 1536,
+          "distance": "Cosine"
+        }
+    }
+}
+
+
+GET collections/Insurance
+
+
+
+
+
+
+
+

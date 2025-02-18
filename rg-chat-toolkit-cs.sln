@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileParser", "FileParser\Fi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "smoci-vector-indexer", "smoci-vector-indexer\smoci-vector-indexer.csproj", "{413632DB-CC9F-4CE3-B95E-ED183C58521C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rg-integrations-tilley", "rg-integrations-tilley\rg-integrations-tilley.csproj", "{01EC1908-3BF1-4B1E-B61F-EA419D776F16}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{413632DB-CC9F-4CE3-B95E-ED183C58521C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{413632DB-CC9F-4CE3-B95E-ED183C58521C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{413632DB-CC9F-4CE3-B95E-ED183C58521C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01EC1908-3BF1-4B1E-B61F-EA419D776F16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01EC1908-3BF1-4B1E-B61F-EA419D776F16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01EC1908-3BF1-4B1E-B61F-EA419D776F16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01EC1908-3BF1-4B1E-B61F-EA419D776F16}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
