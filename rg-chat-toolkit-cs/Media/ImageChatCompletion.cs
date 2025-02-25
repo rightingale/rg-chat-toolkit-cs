@@ -142,12 +142,12 @@ namespace OpenAIApiExample
             string jsonResponse = await response.Content.ReadAsStringAsync();
 
             // Lookup:
-            ChatCompletion chatCompletion = new ChatCompletion();
+            ChatCompletion chatCompletion = new ChatCompletion(null, null);
             var lookupResponse = chatCompletion.SendChatCompletion(
                 sessionID,
                 SYSTEM_PROMPT_LOOKUP_MEDICATION,
                 new[] { new Message("user", jsonResponse) },
-                e => { /*NOOP*/ var allMessages = new List<Message>(); return allMessages; });
+                true/*allowTools*/, null, null, null, null, null);
             if (lookupResponse != null)
             {
                 // Await foreach to process each response as it arrives

@@ -1,0 +1,7 @@
+PUT /collections/grocery-embeddings
+{
+    "vectors": {
+      "size": 3072,
+      "distance": "Cosine"
+    }
+}

@@ -23,6 +23,11 @@ namespace rg_chat_toolkit_cs.Chat
         public string? FunctionName { get; set; }
         public string? FunctionAguments { get; set; }
 
+        public const string ROLE_ASSISTANT = "assistant";
+        public const string ROLE_USER = "user";
+        public const string ROLE_SYSTEM = "system";
+        public const string ROLE_TOOL = "tool";
+
         public Message(string role, string content)
         {
             Role = role;
@@ -33,19 +38,19 @@ namespace rg_chat_toolkit_cs.Chat
         // Return either ChatRequestAssistantMessage or ChatRequestUserMessage by role:
         public ChatRequestMessage ToChatRequestMessage()
         {
-            if (Role == "assistant")
+            if (Role == ROLE_ASSISTANT)
             {
                 return new ChatRequestAssistantMessage(Content);
             }
-            else if (Role == "user")
+            else if (Role == ROLE_USER)
             {
                 return new ChatRequestUserMessage(Content);
             }
-            else if (Role == "system")
+            else if (Role == ROLE_SYSTEM)
             {
                 return new ChatRequestSystemMessage(Content);
             }
-            else if (Role == "tool")
+            else if (Role == ROLE_TOOL)
             {
                 var msg = new ChatRequestToolMessage(Content, this.ID);
                 return msg;

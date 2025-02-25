@@ -25,7 +25,7 @@ namespace rg_chat_toolkit_cs.Configuration
             get
             {
                 var configuration = GetConfigurationBuilder().Build();
-                return configuration["OpenAI:ApiKey"];
+                return configuration["openai-apikey"];
             }
         }
 
