@@ -1,4 +1,5 @@
 ﻿using rg_chat_toolkit_api_cs.Chat;
+using rg_chat_toolkit_api_cs.Data;
 using rg_chat_toolkit_api_cs.Data.Models;
 using rg_chat_toolkit_cs.Chat;
 using System.Security.Claims;
@@ -8,9 +9,6 @@ namespace rg_chat_toolkit_api_cs;
 
 public static class AuthenticationHelper
 {
-    const string CLAIMS_KEY_USER_ROLE_RGADMIN = "rg:user_role";
-    const string CLAIMS_VALUE_USER_ROLE_RGADMIN_ADMIN = "administrator";
-
     public const string MESSAGE_TENANT_ID_MISSING = "Authentication: Missing TenantID header.";
     public const string MESSAGE_TENANT_ID_MISSING_REQUEST = "Authentication: Missing TenantID parameter.";
     public const string MESSAGE_TENANT_ID_INVALID = "Authentication: Invalid TenantID header.";
@@ -51,10 +49,20 @@ public static class AuthenticationHelper
             throw new UnauthorizedAccessException("Authorization: Unauthorized TenantID.");
         }
 
+        // Get auth
+        var auths = DataMethods.JwtAuthentication_Select(requestTenantIDGuid);
+        if (auths == null || auths.Count == 0)
+        {
+            throw new UnauthorizedAccessException(MESSAGE_TENANT_ID_UNKNOWN);
+        }
+
+        var authorizationClaimType = auths[0].RoleAttributeName;
+        var authorizationValueSuperuser = auths[0].SuperUserAttributeValue;
+
         bool isRgAdmin = false;
         isRgAdmin = ((ClaimsIdentity)identity)?
-            .Claims?.Where(claim => claim.Type.EndsWith(CLAIMS_KEY_USER_ROLE_RGADMIN))?
-            .Any(claim => claim.Value == CLAIMS_VALUE_USER_ROLE_RGADMIN_ADMIN) ?? false;
+            .Claims?.Where(claim => claim.Type.EndsWith(authorizationClaimType))?
+            .Any(claim => claim.Value == authorizationValueSuperuser) ?? false;
         bool isAuthorizedUser = false;
         if (isRgAdmin)
         {
@@ -63,9 +71,8 @@ public static class AuthenticationHelper
         else
         {
             // Verify that "sub" in the JWT token matches the UserID in the request
-            const string CLAIMS_KEY_USER_ID = "custom:producer_token";
             string? claimUserID = ((ClaimsIdentity)identity)?
-                .Claims?.Where(claim => claim.Type == CLAIMS_KEY_USER_ID)?
+                .Claims?.Where(claim => claim.Type == auths[0].UserIdattributeName)?
                 .FirstOrDefault()?
                 .Value;
             var requestedUserID = request.UserID.ToString();

@@ -7,6 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using rg_chat_toolkit_api_cs.Cache;
+using rg_chat_toolkit_api_cs.Data;
+using rg_chat_toolkit_api_cs.Data.Models;
 using rg_chat_toolkit_cs.Cache;
 using rg_chat_toolkit_cs.Chat;
 using rg_integration_abstractions.Embedding;
@@ -84,15 +86,20 @@ namespace rg_chat_toolkit_api_cs
                                 {
                                     try
                                     {
-                                        var issuer = LookupValidIssuer(tenantIdGuid);
-                                        if (issuer != null)
+                                        var auths = DataMethods.JwtAuthentication_Select(tenantIdGuid);
+
+                                        if (auths != null && auths.Count > 0)
                                         {
                                             isTenantIDValid = true;
-                                        }//else LookupValidIssuer throws SecurityTokenInvalidIssuerException
+                                        }
+                                        else
+                                        {
+                                            errorMessage = AuthenticationHelper.MESSAGE_TENANT_ID_UNKNOWN_HEADER;
+                                        }
                                     }
-                                    catch (SecurityTokenInvalidIssuerException)
+                                    catch (Exception ex)
                                     {
-                                        errorMessage = AuthenticationHelper.MESSAGE_TENANT_ID_UNKNOWN_HEADER;
+                                        errorMessage = AuthenticationHelper.MESSAGE_TENANT_ID_UNKNOWN_HEADER + " " + ex.Message;
                                     }
                                 }
                                 else
@@ -132,13 +139,27 @@ namespace rg_chat_toolkit_api_cs
                                 Guid tenantIdGuid;
                                 if (Guid.TryParse(tenantId, out tenantIdGuid))
                                 {
-                                    parameters.ValidIssuer = LookupValidIssuer(tenantIdGuid);
+                                    var auths = DataMethods.JwtAuthentication_Select(tenantIdGuid);
+                                    if (auths == null || auths.Count == 0)
+                                    {
+                                        throw new ApplicationException(AuthenticationHelper.MESSAGE_TENANT_ID_UNKNOWN);
+                                    }
+
+                                    parameters.ValidIssuer = auths[0].ValidIssuer;
+
+                                    var json = new WebClient().DownloadString(auths[0].JwksUri);
+                                    var keys = JsonConvert.DeserializeObject<JsonWebKeySet>(json).Keys;
+                                    return (IEnumerable<SecurityKey>)keys;
+                                }
+                                else
+                                {
+                                    throw new ApplicationException(AuthenticationHelper.MESSAGE_TENANT_ID_INVALID_REQUEST);
                                 }
                             }
-
-                            var json = new WebClient().DownloadString(parameters.ValidIssuer + "/.well-known/jwks.json");
-                            var keys = JsonConvert.DeserializeObject<JsonWebKeySet>(json).Keys;
-                            return (IEnumerable<SecurityKey>)keys;
+                            else
+                            {
+                                throw new ApplicationException(AuthenticationHelper.MESSAGE_TENANT_ID_MISSING_REQUEST);
+                            }
                         },
 
                         ValidateIssuerSigningKey = true,
@@ -159,7 +180,13 @@ namespace rg_chat_toolkit_api_cs
                                     throw new SecurityTokenInvalidIssuerException(AuthenticationHelper.MESSAGE_TENANT_ID_INVALID);
                                 }
 
-                                var expectedIssuer = LookupValidIssuer(tenantIdGuid); // Dynamically get issuer
+                                var auths = DataMethods.JwtAuthentication_Select(tenantIdGuid);
+                                if (auths == null || auths.Count == 0)
+                                {
+                                    throw new ApplicationException(AuthenticationHelper.MESSAGE_TENANT_ID_UNKNOWN);
+                                }
+
+                                var expectedIssuer = auths[0].ValidIssuer;
                                 if (issuer != expectedIssuer)
                                 {
                                     throw new SecurityTokenInvalidIssuerException($"Invalid Issuer for Tenant {tenantId}");
@@ -223,22 +250,6 @@ namespace rg_chat_toolkit_api_cs
             app.MapControllers();
 
             app.Run();
-        }
-
-        private static string LookupValidIssuer(Guid? tenantId)
-        {
-            // 902544DA-67E6-4FA8-A346-D1FAA8B27A08
-            // -> https://cognito-idp.us-east-2.amazonaws.com/us-east-2_CrGQj2ghJ/.well-known/jwks.json
-
-            Guid TENANTID_TILLEY = new Guid("902544DA-67E6-4FA8-A346-D1FAA8B27A08");
-            if (tenantId == TENANTID_TILLEY)
-            {
-                return "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_CrGQj2ghJ";
-            }
-            else
-            {
-                throw new SecurityTokenInvalidIssuerException(AuthenticationHelper.MESSAGE_TENANT_ID_UNKNOWN);
-            }
         }
     }
 }
