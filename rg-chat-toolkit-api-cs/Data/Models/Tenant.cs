@@ -17,7 +17,11 @@ public partial class Tenant
 
     public virtual ICollection<AccessKey> AccessKeys { get; set; } = new List<AccessKey>();
 
+    public virtual ICollection<Authentication> Authentications { get; set; } = new List<Authentication>();
+
     public virtual ICollection<Filter> Filters { get; set; } = new List<Filter>();
+
+    public virtual ICollection<Jwtauthorization> Jwtauthorizations { get; set; } = new List<Jwtauthorization>();
 
     public virtual ICollection<Memory> Memories { get; set; } = new List<Memory>();
 

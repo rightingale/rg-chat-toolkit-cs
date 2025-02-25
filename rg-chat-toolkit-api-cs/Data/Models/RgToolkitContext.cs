@@ -17,9 +17,13 @@ public partial class RgToolkitContext : DbContext
 
     public virtual DbSet<AccessKey> AccessKeys { get; set; }
 
+    public virtual DbSet<Authentication> Authentications { get; set; }
+
     public virtual DbSet<ContentType> ContentTypes { get; set; }
 
     public virtual DbSet<Filter> Filters { get; set; }
+
+    public virtual DbSet<Jwtauthorization> Jwtauthorizations { get; set; }
 
     public virtual DbSet<Memory> Memories { get; set; }
 
@@ -76,6 +80,32 @@ public partial class RgToolkitContext : DbContext
                 .HasConstraintName("FK_AccessKey_TenantID");
         });
 
+        modelBuilder.Entity<Authentication>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.Id });
+
+            entity.ToTable("Authentication");
+
+            entity.HasIndex(e => new { e.TenantId, e.Id }, "IX_Authentication_ID").IsUnique();
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Name).HasMaxLength(100);
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.Authentications)
+                .HasForeignKey(d => d.TenantId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Authentication_TenantID");
+        });
+
         modelBuilder.Entity<ContentType>(entity =>
         {
             entity.HasKey(e => e.Name).HasName("PK_ContentType_ID");
@@ -125,6 +155,47 @@ public partial class RgToolkitContext : DbContext
                 .HasForeignKey(d => d.TenantId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Filter_TenantID");
+        });
+
+        modelBuilder.Entity<Jwtauthorization>(entity =>
+        {
+            entity.HasKey(e => new { e.TenantId, e.Id });
+
+            entity.ToTable("JWTAuthorization");
+
+            entity.HasIndex(e => new { e.TenantId, e.AuthenticationId }, "IX_JWTAuthorization_AuthenticationID").IsUnique();
+
+            entity.HasIndex(e => new { e.TenantId, e.Id }, "IX_JWTAuthorization_ID").IsUnique();
+
+            entity.Property(e => e.TenantId).HasColumnName("TenantID");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
+            entity.Property(e => e.AuthenticationId).HasColumnName("AuthenticationID");
+            entity.Property(e => e.CreateDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.JwksUri).HasMaxLength(255);
+            entity.Property(e => e.LastUpdate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.RoleAttributeName).HasMaxLength(100);
+            entity.Property(e => e.SuperUserAttributeValue).HasMaxLength(100);
+            entity.Property(e => e.UserIdattributeName)
+                .HasMaxLength(100)
+                .HasColumnName("UserIDAttributeName");
+            entity.Property(e => e.ValidIssuer).HasMaxLength(255);
+
+            entity.HasOne(d => d.Tenant).WithMany(p => p.Jwtauthorizations)
+                .HasForeignKey(d => d.TenantId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_JWTAuthorization_TenantID");
+
+            entity.HasOne(d => d.Authentication).WithOne(p => p.Jwtauthorization)
+                .HasForeignKey<Jwtauthorization>(d => new { d.TenantId, d.AuthenticationId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_JWTAuthorization_AuthenticationID");
         });
 
         modelBuilder.Entity<Memory>(entity =>
